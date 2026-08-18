@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileText, Home, Info, Phone, Plus, Save, Loader2, Trash2, Pencil, Briefcase, Users, Wrench, Globe, Languages, Search, X, CheckCircle2, HelpCircle, Tag, DollarSign, UserPlus, BookOpen, Eye, EyeOff } from "lucide-react";
-import { useAdminScope } from "@/contexts/AdminSiteScopeContext";
 import AdminSiteScopeSwitcher from "@/components/admin/AdminSiteScopeSwitcher";
 
 interface PageContent {
@@ -147,7 +146,7 @@ const PAGES = [
 
 const PageContentManagement = ({ lockedPage }: { lockedPage?: string } = {}) => {
   const queryClient = useQueryClient();
-  const { scope } = useAdminScope();
+  const scope = "learn";
   const [selectedPage, setSelectedPage] = useState(lockedPage ?? "home");
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

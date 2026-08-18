@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
 import { GraduationCap, BookOpen, Users, Award, PlayCircle, Sparkles, Target, Rocket, Globe, CheckCircle, ArrowRight, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import CoursesNavbar from "@/components/CoursesNavbar";
-import CoursesFooter from "@/components/CoursesFooter";
+import Layout from "@/components/Layout";
 import learnLogoAssetJson from "@/assets/learn-with-alphazero-logo.png.asset.json";
 const learnLogo = learnLogoAssetJson.url;
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { usePageContent } from "@/hooks/usePageContent";
 import instructorHH from "@/assets/instructors/hh.png.asset.json";
 import instructorNayeem from "@/assets/instructors/nayeem.png.asset.json";
@@ -27,7 +25,7 @@ const STATIC_TRAINERS = [
 
 const LearnAboutPage = () => {
   const { language } = useLanguage();
-  const { data: teamMembers } = useTeamMembers();
+  const teamMembers = null;
   const isBn = language === "bn";
   const { getContent: getPageContent } = usePageContent("learn-about", "learn");
 
@@ -122,8 +120,7 @@ const LearnAboutPage = () => {
   ];
 
   return (
-    <>
-      <CoursesNavbar />
+    <Layout>
       <div className="overflow-x-hidden bg-background">
         {/* Hero */}
         <section className="pt-32 pb-24 lg:pt-40 lg:pb-32 relative overflow-hidden">
@@ -437,8 +434,7 @@ const LearnAboutPage = () => {
         </section>
 
       </div>
-      <CoursesFooter />
-    </>
+    </Layout>
   );
 };
 

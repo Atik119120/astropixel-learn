@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Mail, Phone, MessageCircle, Send, GraduationCap, HelpCircle, BookOpen, Clock, MapPin, Sparkles, ArrowUpRight } from "lucide-react";
-import CoursesNavbar from "@/components/CoursesNavbar";
-import CoursesFooter from "@/components/CoursesFooter";
+import Layout from "@/components/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFooterContent } from "@/hooks/useFooterData";
 import { usePageContent } from "@/hooks/usePageContent";
@@ -51,8 +50,7 @@ const LearnContactPage = () => {
   ];
 
   return (
-    <>
-      <CoursesNavbar />
+    <Layout>
       <main className="min-h-screen bg-background">
       {/* Hero */}
       <section className="relative pt-28 pb-8 lg:pt-36 lg:pb-10 overflow-hidden">
@@ -190,8 +188,7 @@ const LearnContactPage = () => {
         </div>
       </section>
       </main>
-      <CoursesFooter />
-    </>
+    </Layout>
   );
 };
 

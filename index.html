@@ -17,29 +17,9 @@
     <meta name="msvalidate.01" content="F16D6A4F9D02314A9D686E85C55DB30D" />
     <meta name="indexnow-key" content="611d3d3f77bf4440b4583708aac5b67b" />
     
-    <!-- Favicon for all browsers -->
-    <link id="fav-default" rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    
-    <!-- Android Chrome Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <script>
-      (function(){
-        var p = location.pathname;
-        if (location.hostname.startsWith('learn.') || p.startsWith('/courses') || p.startsWith('/instructors') || p.startsWith('/learn-about') || p.startsWith('/learn-contact') || p.startsWith('/student') || p.startsWith('/teacher')) {
-          document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(function(el){ el.parentNode.removeChild(el); });
-          var l = document.createElement('link');
-          l.rel = 'icon'; l.type = 'image/png'; l.href = '/learn-favicon.png';
-          document.head.appendChild(l);
-          var a = document.createElement('link');
-          a.rel = 'apple-touch-icon'; a.href = '/learn-favicon.png';
-          document.head.appendChild(a);
-        }
-      })();
-    </script>
+    <!-- Favicon for AstroPixel Education -->
+    <link id="fav-default" rel="icon" type="image/png" href="/learn-favicon.png" />
+    <link rel="apple-touch-icon" href="/learn-favicon.png" />
     
     <!-- iOS Safari Icons (Apple Touch Icons) -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

@@ -1,246 +1,87 @@
-import { ArrowUpRight, Facebook, Instagram, MessageCircle, Twitter, Youtube, Github, Globe, Mail, Phone, Linkedin, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import logoFullPng from "@/assets/logo-full.png";
-import logoAsset from "@/assets/astropixel-logo.png.asset.json";
-const logo = logoFullPng || logoAsset.url;
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useFooterLinks, useFooterContent } from "@/hooks/useFooterData";
-
-const DiscordIcon = ({ size = 18, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-  </svg>
-);
-
-const PinterestIcon = ({ size = 18, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
-  </svg>
-);
-
-type IconComponent = LucideIcon | typeof DiscordIcon | typeof PinterestIcon;
-
-const ICON_MAP: Record<string, IconComponent> = {
-  Facebook, Instagram, MessageCircle, Twitter, Youtube, Github, Globe, Mail, Phone, Linkedin,
-  Discord: DiscordIcon,
-  Pinterest: PinterestIcon,
-};
+import { ArrowUpRight, Mail, Phone, MapPin, Facebook, Instagram, Youtube, Linkedin, MessageCircle } from "lucide-react";
+import learnLogoAssetJson from "@/assets/learn-with-alphazero-logo.png.asset.json";
+const learnLogo = learnLogoAssetJson.url;
 
 const Footer = () => {
-  const { t } = useLanguage();
-  const { data: footerLinks } = useFooterLinks();
-  const { data: footerContents } = useFooterContent();
-
-  const getContent = (key: string) => {
-    const content = footerContents?.find(c => c.content_key === key);
-    return content?.content_en ?? null;
-  };
-
-  const getIcon = (name: string) => ICON_MAP[name] || Globe;
-
-  const socialLinks = footerLinks?.filter(link => link.link_type === 'social') || [];
-  const defaultSocialLinks = [
-    { name: "Facebook", url: "https://www.facebook.com/astropixel.tech", icon: "Facebook" },
-    { name: "Instagram", url: "https://www.instagram.com/astropixel.tech/", icon: "Instagram" },
-    { name: "LinkedIn", url: "https://www.linkedin.com/company/astropixel/", icon: "Linkedin" },
-    { name: "YouTube", url: "https://www.youtube.com/@Astropixel_tech", icon: "Youtube" },
-    { name: "Pinterest", url: "https://www.pinterest.com/astropixel_tech/", icon: "Pinterest" },
-    { name: "WhatsApp", url: "https://wa.me/8801344497808", icon: "MessageCircle" },
-    { name: "Email", url: "mailto:hello@astropixel.tech", icon: "Mail" },
-  ];
-  const displaySocialLinks = socialLinks.length > 0 ? socialLinks : defaultSocialLinks;
-
-  const explore = [
-    { name: t("nav.home") || "Home", href: "/" },
-    { name: t("nav.about") || "About", href: "/about" },
-    { name: t("nav.work") || "Work", href: "/work" },
-    { name: t("nav.contact") || "Contact", href: "/contact" },
-  ];
-
-  const services = [
-    { name: "UI/UX Design", href: "/services" },
-    { name: "Web Development", href: "/services" },
-    { name: "Branding", href: "/services" },
-    { name: "Digital Marketing", href: "/services" },
-  ];
-
-  const rawEmail = getContent('email');
-  const email = (!rawEmail || rawEmail.includes('alphazero') || rawEmail.includes('contact@')) ? 'hello@astropixel.tech' : rawEmail;
-  const address = getContent('address') || 'Hi-Tech Park, Rajshahi, Bangladesh';
-  const description = getContent('description') || 'We are a creative agency specializing in graphics design, video editing, web development, and digital marketing.';
-
   return (
-    <footer className="relative bg-[#0D111A] text-background">
-      <div className="container mx-auto px-6 sm:px-8 pt-14 sm:pt-20 pb-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Top grid: Brand | Explore | Services | Office */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-            {/* Brand */}
-            <div className="lg:pr-6">
-              <Link to="/" className="inline-block mb-6">
-                <img
-                  src={logo}
-                  alt="AstroPixel Creative Design Agency Logo"
-                  width={180}
-                  height={36}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-9 w-auto"
-                />
-              </Link>
-              <p className="text-sm leading-relaxed text-background/60 max-w-xs">
-                {description}
-              </p>
-            </div>
-
-            {/* Explore */}
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00D8F6]" />
-                <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-background">
-                  EXPLORE
-                </h4>
-              </div>
-              <ul className="space-y-3 text-sm font-medium">
-                {explore.map((item) => (
-                  <li key={item.name}>
-                    <Link
-                      to={item.href}
-                      className="text-background/70 hover:text-background transition-colors"
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Services */}
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00D8F6]" />
-                <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-background">
-                  SERVICES
-                </h4>
-              </div>
-              <ul className="space-y-3 text-sm font-medium">
-                {services.map((item) => (
-                  <li key={item.name}>
-                    <Link
-                      to={item.href}
-                      className="text-background/70 hover:text-background transition-colors"
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Office */}
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00D8F6]" />
-                <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-background">
-                  OFFICE
-                </h4>
-              </div>
-              <div className="space-y-3 text-sm font-medium text-background/70">
-                <p>{address}</p>
-                <a
-                  href={`mailto:${email}`}
-                  className="block hover:text-background transition-colors text-background/80"
-                >
-                  {email}
-                </a>
-                {/* Social icons placed right inside Office column underneath email */}
-                <div className="pt-2 flex flex-wrap items-center gap-2">
-                  {displaySocialLinks.map((item) => {
-                    const Icon = getIcon(item.icon);
-                    return (
-                      <a
-                        key={item.name}
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={item.name}
-                        className="w-8 h-8 rounded-full border border-background/20 flex items-center justify-center text-background/70 hover:text-background hover:border-background/60 hover:scale-105 transition-all duration-300"
-                      >
-                        <Icon size={15} />
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+    <footer className="relative bg-[#0D111A] text-white pt-16 pb-8 border-t border-white/10">
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/10">
+          {/* Brand Info */}
+          <div className="space-y-4">
+            <Link to="/" className="inline-block">
+              <img src={learnLogo} alt="AstroPixel Education Logo" className="h-9 w-auto" />
+            </Link>
+            <p className="text-sm text-neutral-400 leading-relaxed">
+              Empowering developers and designers with industry-ready coding, UI/UX design, and AI workflows from zero to impact.
+            </p>
           </div>
 
-          {/* Partner & Review Badges Row (Google, Behance, Dribbble) */}
-          <div className="mt-12 py-7 border-t border-b border-background/10 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto items-center text-center justify-center">
-            {/* Google */}
-            <a 
-              href="https://share.google/K4AuEFEeRfy3AQCVj" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-1.5 group cursor-pointer"
-            >
-              <div className="flex items-center gap-1.5 font-bold text-base tracking-tight group-hover:scale-105 transition-transform">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-                <span className="font-sans font-bold text-lg text-white">Google</span>
-              </div>
-              <span className="text-xs font-medium text-background/50 tracking-wider uppercase flex items-center gap-1.5 group-hover:text-background/80 transition-colors">
-                <span>Reviewed On</span>
-                <span className="flex text-amber-400 text-xs">★★★★★</span>
-              </span>
-            </a>
-
-            {/* Behance */}
-            <a 
-              href="https://www.behance.net/astropixels" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-1.5 group cursor-pointer"
-            >
-              <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
-                <svg className="h-6 w-auto" viewBox="0 0 108 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9.25762 6.14551C10.1763 6.14551 11.0243 6.21688 11.8017 6.42818C12.5791 6.56952 13.2151 6.8522 13.7804 7.20554C14.3458 7.55889 14.7698 8.05357 15.0525 8.69029C15.3351 9.32561 15.4765 10.1037 15.4765 10.9517C15.4765 11.9404 15.2645 12.7891 14.7698 13.4251C14.3458 14.0604 13.6391 14.6258 12.7911 15.0498C13.9924 15.4031 14.9111 16.0384 15.4765 16.8872C16.0418 17.7352 16.3952 18.7952 16.3952 19.9966C16.3952 20.9853 16.1832 21.834 15.8298 22.5407C15.4765 23.2474 14.9111 23.8834 14.2751 24.3074C13.6391 24.7321 12.8617 25.0855 12.0137 25.2968C11.1657 25.5081 10.3177 25.6501 9.46963 25.6501H0V6.14551H9.25762ZM8.69227 14.0604C9.46963 14.0604 10.1056 13.8484 10.6003 13.4951C11.095 13.1417 11.307 12.5057 11.307 11.7283C11.307 11.3043 11.2364 10.8803 11.095 10.5976C10.9537 10.315 10.7417 10.103 10.459 9.89096C10.1763 9.74962 9.89364 9.60828 9.5403 9.53761C9.18695 9.46694 8.83361 9.46694 8.4096 9.46694H4.3108V14.0604H8.69227ZM8.90428 22.3993C9.32829 22.3993 9.75231 22.3287 10.1056 22.2587C10.459 22.1873 10.8123 22.046 11.095 21.834C11.3777 21.622 11.5897 21.41 11.8017 21.0566C11.943 20.7033 12.0844 20.2786 12.0844 19.7846C12.0844 18.7952 11.8017 18.0885 11.2364 17.5932C10.671 17.1691 9.89364 16.9578 8.97495 16.9578H4.3108V22.3993H8.90428ZM22.5434 22.3287C23.1087 22.894 23.9568 23.1767 25.0875 23.1767C25.8648 23.1767 26.5715 22.9647 27.1369 22.6114C27.7022 22.1866 28.0555 21.7633 28.1969 21.3386H31.6597C31.0943 23.0347 30.2463 24.2367 29.1156 25.0134C27.9849 25.7201 26.6422 26.1448 25.0168 26.1448C23.8861 26.1448 22.8967 25.9321 21.978 25.5787C21.0593 25.2254 20.3526 24.7314 19.7166 24.0247C19.0806 23.3887 18.5859 22.6114 18.3032 21.692C17.9499 20.7733 17.8086 19.7846 17.8086 18.6532C17.8086 17.5932 17.9499 16.6045 18.3032 15.6851C18.6566 14.7664 19.1513 13.9898 19.7873 13.2831C20.4233 12.647 21.2007 12.0817 22.0487 11.7283C22.9674 11.375 23.8861 11.163 25.0168 11.163C26.2182 11.163 27.2782 11.375 28.1969 11.8697C29.1156 12.3644 29.8223 12.9297 30.3876 13.7777C30.953 14.5551 31.377 15.4731 31.6597 16.4632C31.801 17.4525 31.8717 18.4419 31.801 19.5726H21.554C21.554 20.7033 21.978 21.7633 22.5434 22.3287ZM26.9955 14.9084C26.5008 14.4138 25.7235 14.1311 24.8048 14.1311C24.1688 14.1311 23.6741 14.2717 23.2501 14.4844C22.826 14.6964 22.5434 14.9784 22.2607 15.2618C21.978 15.5452 21.8367 15.8978 21.766 16.2512C21.6953 16.6045 21.6247 16.8865 21.6247 17.1699H27.9849C27.8435 16.1098 27.4902 15.4031 26.9955 14.9084ZM37.3132 6.14551V13.4951H37.3838C37.8785 12.647 38.5145 12.0817 39.2919 11.7283C40.0693 11.375 40.7759 11.163 41.5533 11.163C42.6133 11.163 43.4614 11.3043 44.0974 11.587C44.7334 11.8697 45.2988 12.2937 45.6521 12.7884C46.0054 13.2831 46.2881 13.9191 46.4295 14.6258C46.5708 15.3325 46.6415 16.1105 46.6415 17.0285V25.7208H42.7547V17.7352C42.7547 16.5338 42.5427 15.6858 42.1893 15.1205C41.836 14.5551 41.2 14.2724 40.2813 14.2724C39.2212 14.2724 38.4439 14.6258 38.0199 15.1918C37.5252 15.8271 37.3132 16.8872 37.3132 18.3006V25.7208H33.4264V6.14551H37.3132ZM49.4682 13.6364C49.8922 13.0004 50.3869 12.5764 51.0229 12.1517C51.659 11.7983 52.3656 11.5163 53.143 11.3743C53.9204 11.233 54.697 11.1623 55.4751 11.1623C56.1818 11.1623 56.8884 11.233 57.6665 11.3036C58.3732 11.3743 59.0799 11.5856 59.6445 11.869C60.2806 12.1509 60.7046 12.5757 61.1293 13.0704C61.4819 13.5657 61.6939 14.2724 61.6939 15.1205V22.5407C61.6939 23.1767 61.7646 23.8127 61.8353 24.3788C61.9066 24.9441 62.1172 25.4388 62.33 25.7208H58.3725C58.2304 25.5794 58.1598 25.2968 58.0898 25.0855C58.0191 24.8728 58.0191 24.5908 58.0191 24.3788C57.3831 25.0141 56.6764 25.4388 55.8284 25.7208C54.9804 26.0035 54.1324 26.0741 53.2843 26.0741C52.5776 26.0741 52.0123 26.0035 51.3763 25.7922C50.8109 25.6508 50.3162 25.3674 49.8216 25.0141C49.3975 24.6608 49.0442 24.2367 48.7615 23.6721C48.5495 23.106 48.4082 22.5407 48.4082 21.7633C48.4082 20.9853 48.5495 20.2786 48.8322 19.7846C49.1149 19.2899 49.4682 18.8659 49.8922 18.5126C50.3162 18.2306 50.8816 17.9472 51.4469 17.8059C52.0123 17.6652 52.5777 17.5239 53.2137 17.4525L54.9097 17.2405C55.4751 17.1699 55.9698 17.0992 56.3938 17.0285C56.8178 16.8872 57.1711 16.7458 57.4538 16.5338C57.7365 16.3218 57.8071 16.0391 57.8071 15.6151C57.8071 15.1911 57.7365 14.8378 57.5951 14.6258C57.4538 14.4138 57.2418 14.2018 57.0298 14.0604C56.8171 13.9191 56.5351 13.8484 56.2524 13.7785C55.9698 13.7071 55.6164 13.7071 55.2631 13.7071C54.4857 13.7071 53.9204 13.8484 53.4963 14.2018C53.0723 14.5551 52.7897 15.1205 52.719 15.8271H48.8322C48.8322 14.9791 49.1149 14.2018 49.4682 13.6364ZM57.1704 19.1486C56.9591 19.2192 56.6764 19.2899 56.3931 19.3606C56.1104 19.432 55.8277 19.432 55.4744 19.5019C55.1924 19.5726 55.8277 19.5726 55.4757 19.6433L53.7076 19.8553C53.425 19.9259 53.1423 20.0673 53.001 20.2086C52.7889 20.35 52.6476 20.562 52.5063 20.774C52.295 21.0566 52.295 21.3393 52.295 21.6927C52.295 22.046 52.3656 22.3287 52.507 22.5407C52.6483 22.7527 52.7897 22.9654 53.0017 23.106C53.2137 23.2474 53.4963 23.3188 53.779 23.3887C54.0617 23.4587 54.3437 23.4594 54.697 23.4594C55.4751 23.4594 56.0397 23.3188 56.4637 23.106C56.8885 22.8241 57.1704 22.5407 57.3831 22.1873C57.5951 21.834 57.7365 21.4807 57.7365 21.1273C57.8071 20.774 57.8071 20.492 57.8071 20.2793V18.7952C57.5951 18.9366 57.3831 19.0786 57.1704 19.1486ZM67.5602 11.5163V13.4951H67.6308C68.1248 12.647 68.7615 12.0817 69.5382 11.7283C70.3162 11.375 71.1643 11.163 71.9409 11.163C73.001 11.163 73.849 11.3043 74.485 11.587C75.1917 11.8697 75.6871 12.2937 76.0404 12.7884C76.3938 13.2831 76.6757 13.9191 76.8877 14.6258C77.0291 15.3325 77.1005 16.1105 77.1005 17.0285V25.7208H73.2137V17.7352C73.2137 16.5338 73.001 15.6858 72.6476 15.1205C72.2943 14.5551 71.6582 14.2018 70.6689 14.2018C69.6088 14.2018 68.8308 14.6258 68.3368 15.2618C67.8421 15.8978 67.6301 16.9578 67.6301 18.3712V25.7915H63.7433V11.5163H67.5602ZM85.7913 14.0604C85.156 14.0604 84.6606 14.2018 84.2373 14.4851C83.8133 14.7671 83.4599 15.1205 83.1773 15.6158C82.8946 16.0399 82.7533 16.5345 82.6112 17.0999C82.4706 17.6659 82.4706 18.1599 82.4706 18.726C82.4706 19.22 82.5413 19.786 82.6112 20.28C82.7533 20.846 82.8939 21.2694 83.1773 21.6934C83.4599 22.1181 83.7426 22.4714 84.1666 22.7534C84.5907 23.0361 85.0846 23.1781 85.7206 23.1781C86.6401 23.1781 87.3467 22.8954 87.9114 22.4001C88.4068 21.9061 88.7601 21.1994 88.8308 20.28H92.5762C92.2943 22.188 91.5876 23.6014 90.3848 24.5915C89.1841 25.5802 87.6294 26.0755 85.7206 26.0755C84.6606 26.0755 83.6712 25.8635 82.8232 25.5102C81.9038 25.1568 81.1971 24.6622 80.5618 24.0261C79.9265 23.3901 79.4304 22.6128 79.0771 21.7647C78.7237 20.846 78.5831 19.9266 78.5831 18.8666C78.5831 17.7359 78.7237 16.7465 79.0771 15.8279C79.4304 14.9092 79.8551 14.0611 80.4904 13.3544C81.1265 12.6478 81.9038 12.1531 82.7526 11.7291C83.6705 11.3757 84.6599 11.1637 85.7906 11.1637C86.6393 11.1637 87.4167 11.305 88.1934 11.517C88.97 11.7291 89.6774 12.0824 90.2427 12.5057C90.8788 12.9304 91.3735 13.4951 91.7268 14.2018C92.0801 14.8378 92.2929 15.6858 92.3628 16.6045H88.5467C88.4075 14.9084 87.4881 14.0604 85.7913 14.0604ZM20.7767 7.48822H28.6916V9.39628H20.7767V7.48822ZM98.4418 22.3287C99.0078 22.894 99.9258 23.1767 100.986 23.1767C101.764 23.1767 102.471 22.9647 103.035 22.6114C103.601 22.1866 103.955 21.7633 104.095 21.3386H107.488C106.922 23.0347 106.075 24.2367 104.943 25.0134C103.812 25.7201 102.47 26.1448 100.844 26.1448C99.7138 26.1448 98.7244 25.9321 97.805 25.5787C96.9352 25.2544 96.1587 24.7207 95.5443 24.0247C94.9083 23.3887 94.4136 22.6114 94.131 21.692C93.7776 20.7733 93.6363 19.7846 93.6363 18.6532C93.6363 17.5932 93.7776 16.6045 94.131 15.6851C94.4713 14.7988 94.9747 13.9841 95.615 13.2831C96.251 12.647 97.0284 12.0817 97.8764 11.7283C98.7951 11.375 99.7845 11.163 100.844 11.163C102.045 11.163 103.105 11.375 103.954 11.8697C104.872 12.3644 105.579 12.9297 106.145 13.7777C106.71 14.5551 107.134 15.4731 107.417 16.4632C107.699 17.4518 107.77 18.5119 107.699 19.6433H97.4517C97.4517 20.7033 97.8764 21.7633 98.4418 22.3287ZM102.965 14.9084C102.47 14.4138 101.692 14.1311 100.774 14.1311C100.138 14.1311 99.6424 14.2717 99.2184 14.4844C98.7944 14.6964 98.441 14.9784 98.2297 15.2618C98.0184 15.5452 97.805 15.8978 97.7351 16.2512C97.6651 16.6045 97.5944 16.8865 97.5944 17.1699H103.955C103.742 16.1098 103.389 15.4031 102.965 14.9084Z" fill="#146EF5"/>
-                </svg>
-              </div>
-              <span className="text-[11px] font-medium text-background/40 tracking-wider uppercase group-hover:text-background/80 transition-colors">Creative Team On Behance</span>
-            </a>
-
-            {/* Dribbble */}
-            <a 
-              href="https://dribbble.com/astropixel" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-1.5 group cursor-pointer"
-            >
-              <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
-                <svg className="h-5 w-auto" viewBox="0 0 92 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M28.1156 13.9595C29.1756 13.9595 30.02 13.1047 30.02 12.0718C30.02 11.0388 29.1576 10.184 28.1156 10.184C27.0557 10.184 26.2113 11.0388 26.2113 12.0718C26.2113 13.1047 27.0737 13.9595 28.1156 13.9595ZM91.03 20.4064C90.7426 20.2105 90.509 20.1749 90.3294 20.5667C87.1315 27.441 81.724 24.0038 82.2629 24.3066C83.4666 23.7723 86.6105 21.2612 86.1255 17.8063C85.838 15.687 84.0056 14.7609 82.0653 15.0993C78.6699 15.687 77.4303 19.3022 78.0591 22.5079C78.1669 23.0599 78.3645 23.5052 78.5621 23.9504C74.7355 27.0313 73.2085 21.19 73.0468 20.4954C73.0468 20.4598 76.011 18.0022 76.8195 12.1786C77.6818 6.07011 75.7236 4.94814 73.7115 4.98376C69.9927 5.05499 68.9866 12.7663 70.334 19.1776C70.2262 19.2132 69.6873 19.4981 68.8429 19.5337C68.2321 17.6282 65.6271 15.9719 64.9444 16.6131C63.2377 18.2159 65.3576 21.3503 66.8487 21.5996C65.9505 27.067 60.3633 25.7135 61.4053 18.857C63.2198 15.5089 64.6211 10.5046 64.3695 7.49483C64.2797 6.42629 63.4892 5.00157 61.6927 5.0728C58.2254 5.21527 58.8482 12.9266 58.2614 18.394C58.2434 18.2515 58.0458 19.0529 56.6265 19.4625C56.2852 17.6104 53.285 15.7582 52.5843 16.6487C51.2549 18.3227 53.5545 21.279 54.6324 21.4927C53.7341 26.9601 48.1469 25.6066 49.1889 18.7501C51.0034 15.402 52.4047 10.3977 52.1532 7.38798C52.0633 6.31943 51.2729 4.89471 49.4763 4.96595C46.009 5.10842 45.6318 12.8197 46.045 18.2871C46.027 18.1446 45.8294 18.9817 44.3562 19.3735C44.3023 16.9871 41.3021 15.8829 40.5835 16.6487C39.29 18.0022 40.871 20.7982 42.3441 21.4927C41.4459 26.9601 35.8587 25.6066 36.9007 18.7501C38.7151 15.402 40.1164 10.3977 39.8649 7.38798C39.7751 6.31943 38.9846 4.89471 37.1881 4.96595C33.7208 5.10842 33.4513 13.1937 33.8466 18.6789C32.7147 23.523 28.8881 29.5602 29.3732 17.4501C29.4271 16.5953 29.481 16.2747 29.0498 15.9541C28.7265 15.7048 28.0079 15.8295 27.6126 15.8295C27.1276 15.8473 27.0018 16.1322 26.894 16.5596C26.6425 17.646 26.6066 18.7145 26.5706 20.1571C26.5527 20.8338 26.4988 21.1544 26.2293 22.0804C25.9598 23.0065 24.4687 24.6984 23.6423 24.4134C22.5105 24.0216 22.8698 20.8338 23.0854 18.6433C23.265 16.9158 22.6901 16.1322 21.2349 15.8473C20.3726 15.6692 19.8696 15.7048 18.9713 15.4199C18.127 15.1527 17.9473 13.5855 16.1508 14.102C15.1627 14.3869 15.7915 16.4528 15.5579 17.9844C14.3902 25.4998 11.9828 25.7135 10.869 22.0626C15.9172 9.82781 12.3242 5.00157 10.2222 5.00157C8.03047 5.00157 5.5333 6.49753 6.59325 16.0432C6.07226 15.9007 5.92854 15.8117 5.35365 15.8117C2.1738 15.8117 0 18.3583 0 21.5105C0 24.6628 2.1738 27.2094 5.35365 27.2094C7.24 27.2094 8.55147 26.3546 9.55752 25.0545C10.2043 25.9806 10.9947 27.2273 12.4499 27.1738C16.7796 27.0135 18.0371 18.2159 18.1808 17.7172C18.6479 17.7885 19.0791 17.9131 19.5103 17.9844C20.2289 18.0912 20.2648 18.3762 20.2648 19.0707C20.0852 25.0545 21.199 27.156 23.7141 27.156C25.1154 27.156 26.373 25.7847 27.2353 24.8052C27.8821 26.1231 28.9061 27.1204 30.2894 27.156C33.631 27.2451 34.9065 21.9558 34.7987 22.6503C34.7089 23.2024 35.8766 27.1204 39.326 27.1382C43.5837 27.156 44.3922 22.5079 44.482 21.7243C44.5 21.564 44.5 21.5818 44.482 21.7243C44.482 21.7421 44.482 21.7599 44.482 21.7777C45.8294 21.5284 46.53 20.816 46.53 20.816C46.53 20.816 47.6259 27.2272 51.6501 27.156C55.836 27.0848 56.6265 22.8818 56.7163 22.0626C56.7343 21.8667 56.7343 21.8845 56.7163 22.0626V22.0804C58.3332 21.4927 58.7464 20.9228 58.7464 20.9228C58.7464 20.9228 59.6087 27.2094 63.8665 27.2629C67.6572 27.3163 69.0585 23.4695 69.0585 21.8489C69.7052 21.8489 70.873 21.4749 70.855 21.4571C70.855 21.4571 72.2383 26.9423 76.1188 27.2272C77.9333 27.3519 79.2987 26.2121 80.0891 25.6957C81.9216 27.156 88.0118 29.0438 91.8564 22.5791C92.3954 21.653 91.2276 20.5667 91.03 20.4064ZM5.20993 25.108C3.3595 25.108 2.15583 23.3983 2.15583 21.564C2.15583 19.7296 3.25171 18.02 5.10214 18.02C5.9465 18.02 6.39563 18.109 7.06035 18.6789C7.18611 19.1419 7.50948 20.2105 7.67117 20.6913C7.88675 21.3325 8.15623 21.8845 8.40774 22.49C8.04844 24.0216 6.8268 25.108 5.20993 25.108ZM9.73717 18.7323C9.66531 18.6077 9.68328 18.6789 9.59345 18.5721C9.25211 17.646 8.60536 15.5979 8.51554 13.2828C8.42571 10.647 8.87484 7.56607 10.1863 7.56607C11.0666 7.56607 12.0008 13.817 9.73717 18.7323ZM35.8946 15.9897C35.679 14.4225 35.679 7.45921 37.3678 7.65511C38.284 8.0291 36.7749 14.6006 35.8946 15.9897ZM48.2008 15.9897C47.9852 14.4225 47.9852 7.45921 49.674 7.65511C50.6082 8.0291 49.0811 14.6006 48.2008 15.9897ZM60.4352 16.0966C60.2196 14.5294 60.2196 7.56607 61.9083 7.76197C62.8245 8.13596 61.2975 14.7075 60.4352 16.0966ZM73.9271 7.24551C75.4721 7.08523 75.4002 13.7636 72.3102 17.9844C71.897 16.4528 71.2862 7.77978 73.9271 7.24551ZM80.3946 21.6174C79.8915 19.1419 81.185 17.5035 82.4965 17.3254C82.9636 17.2542 83.6283 17.5569 83.7541 18.109C83.9697 19.1598 83.7181 20.6913 80.7718 22.6681C80.7898 22.6681 80.5023 22.1695 80.3946 21.6174Z" fill="#EA4C89"/>
-                </svg>
-              </div>
-              <span className="text-[11px] font-medium text-background/40 tracking-wider uppercase group-hover:text-background/80 transition-colors">Creative Team On Dribbble</span>
-            </a>
+          {/* Quick Links */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4">Learn Navigation</h4>
+            <ul className="space-y-2.5 text-sm text-neutral-300">
+              <li><Link to="/" className="hover:text-white transition-colors">Home</Link></li>
+              <li><Link to="/courses" className="hover:text-white transition-colors">All Courses</Link></li>
+              <li><Link to="/about" className="hover:text-white transition-colors">About Platform</Link></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors">Student Helpdesk</Link></li>
+              <li><Link to="/student/login" className="hover:text-white transition-colors">Student Login</Link></li>
+            </ul>
           </div>
 
-          {/* Bottom Copyright Bar matching reference image */}
-          <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-background/60">
-            <Link to="/terms" className="hover:text-background transition-colors">
-              Terms & Conditions
-            </Link>
-            <span className="text-center">
-              © {new Date().getFullYear()}, AstroPixel Agency, All Rights Reserved.
-            </span>
-            <Link to="/privacy" className="hover:text-background transition-colors">
-              Privacy Policy
-            </Link>
+          {/* Student Portals & Portals */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4">Portals & Verify</h4>
+            <ul className="space-y-2.5 text-sm text-neutral-300">
+              <li><Link to="/student/dashboard" className="hover:text-white transition-colors">Student Dashboard</Link></li>
+              <li><Link to="/teacher/login" className="hover:text-white transition-colors">Instructor Login</Link></li>
+              <li><Link to="/admin/login" className="hover:text-white transition-colors">Education Admin</Link></li>
+              <li><Link to="/verify-certificate" className="hover:text-white transition-colors">Verify Certificate</Link></li>
+              <li><Link to="/my-certificates" className="hover:text-white transition-colors">My Certificates</Link></li>
+            </ul>
+          </div>
+
+          {/* Contact & Socials */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4">Get Support</h4>
+            <p className="text-sm text-neutral-300 flex items-center gap-2">
+              <Mail size={15} className="text-cyan-400" />
+              <span>hello@astropixel.tech</span>
+            </p>
+            <p className="text-sm text-neutral-300 flex items-center gap-2">
+              <Phone size={15} className="text-cyan-400" />
+              <span>+880 1344-497808</span>
+            </p>
+            <p className="text-sm text-neutral-300 flex items-center gap-2">
+              <MapPin size={15} className="text-cyan-400" />
+              <span>Hi-Tech Park, Rajshahi, BD</span>
+            </p>
+
+            <div className="pt-3 flex items-center gap-2">
+              <a href="https://www.facebook.com/astropixel.tech" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">
+                <Facebook size={15} />
+              </a>
+              <a href="https://wa.me/8801344497808" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">
+                <MessageCircle size={15} />
+              </a>
+              <a href="https://www.youtube.com/@Astropixel_tech" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">
+                <Youtube size={15} />
+              </a>
+              <a href="https://www.linkedin.com/company/astropixel/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">
+                <Linkedin size={15} />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
+          <p>© {new Date().getFullYear()} AstroPixel Education. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <a href="https://astropixel.tech" target="_blank" rel="noopener noreferrer" className="hover:text-white flex items-center gap-1">
+              <span>Agency Site</span>
+              <ArrowUpRight size={12} />
+            </a>
           </div>
         </div>
       </div>

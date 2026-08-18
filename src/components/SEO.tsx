@@ -11,13 +11,13 @@ interface SEOProps {
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
-const DEFAULT_TITLE = "AstroPixel — Creative Design Agency in Rajshahi, Bangladesh";
+const DEFAULT_TITLE = "AstroPixel Education — Learn Web Dev, UI/UX & AI Workflows";
 const DEFAULT_DESCRIPTION =
-  "AstroPixel is a creative design agency in Rajshahi, Bangladesh, founded by Sofiullah Ahammad. Specializing in logo design, branding, UI/UX, web & social media design. From zero to impact.";
+  "AstroPixel Education offers industry-ready online courses in Web Design, UI/UX Design, SaaS Development, and Modern Frontend Engineering.";
 const DEFAULT_KEYWORDS =
-  "AstroPixel, creative agency Rajshahi, logo design Bangladesh, branding agency Bangladesh, UI UX design agency, web design agency, Sofiullah Ahammad";
-const DEFAULT_OG_IMAGE = "https://astropixel.tech/og-image.png";
-const DOMAIN = "https://astropixel.tech";
+  "AstroPixel Education, web development courses Bangladesh, UI UX design courses, learn coding online, Sofiullah Ahammad";
+const DEFAULT_OG_IMAGE = "https://learn.astropixel.tech/og-image.png";
+const DOMAIN = "https://learn.astropixel.tech";
 
 export const SEO = ({
   title = DEFAULT_TITLE,
@@ -46,7 +46,7 @@ export const SEO = ({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:site_name" content="AstroPixel" />
+      <meta property="og:site_name" content="AstroPixel Education" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

@@ -15,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { GraduationCap, ArrowLeft, Mail, Lock, User, Sun, Moon, Globe, ShieldCheck, Loader2, RefreshCw, Phone, Users } from 'lucide-react';
 import { z } from 'zod';
-import { useTeamMembers } from '@/hooks/useTeamMembers';
 
 export default function StudentLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +43,8 @@ export default function StudentLoginPage() {
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   // Team members for teacher signup
-  const { data: teamMembers, isLoading: teamMembersLoading } = useTeamMembers();
+  const teamMembers = null;
+  const teamMembersLoading = false;
   
   const { user, role, isLoading: authLoading, signIn, signUp } = useAuth();
   const { language, setLanguage, t } = useLanguage();

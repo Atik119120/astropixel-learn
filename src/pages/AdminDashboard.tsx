@@ -62,26 +62,17 @@ import {
 } from 'lucide-react';
 
 import CourseManagement from '@/components/admin/CourseManagement';
-import { WorksManagement } from '@/components/admin/WorksManagement';
-import { TeamManagement } from '@/components/admin/TeamManagement';
-import { ServicesManagement } from '@/components/admin/ServicesManagement';
 import SiteSettingsManagement from '@/components/admin/SiteSettingsManagement';
 import PageContentManagement from '@/components/admin/PageContentManagement';
-import ContactInfoManagement from '@/components/admin/ContactInfoManagement';
-import AboutPageEditor from '@/components/admin/AboutPageEditor';
 import LearnPagesEditor from '@/components/admin/LearnPagesEditor';
-import alphazeroLogoAsset from '@/assets/alphazero-logo.png.asset.json';
 import learnLogoAssetJson from '@/assets/learn-with-alphazero-logo.png.asset.json';
 const learnLogo = learnLogoAssetJson.url;
-import HomepageEditor from '@/components/admin/HomepageEditor';
-import FooterManagement from '@/components/admin/FooterManagement';
 import TeacherManagement from '@/components/admin/TeacherManagement';
 import EmailManagement from '@/components/admin/EmailManagement';
 import ApiKeyManagement from '@/components/admin/ApiKeyManagement';
 import PaymentApiManagement from '@/components/admin/PaymentApiManagement';
 import LandingPageManagement from '@/components/admin/LandingPageManagement';
 import FeedbackViewer from '@/components/admin/FeedbackViewer';
-
 import CommentManagement from '@/components/admin/CommentManagement';
 import CouponManagement from '@/components/admin/CouponManagement';
 import AdminAssistant from '@/components/admin/AdminAssistant';
@@ -91,11 +82,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // Chart colors
 const CHART_COLORS = ['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444', '#ec4899'];
 
-import { AdminSiteScopeProvider, useAdminScope } from '@/contexts/AdminSiteScopeContext';
-import AdminSiteScopeSwitcher from '@/components/admin/AdminSiteScopeSwitcher';
-
 function AdminDashboardInner() {
-  const { scope } = useAdminScope();
+  const scope = "learn";
   const { user, profile, signOut, isAdmin, isLoading: authLoading } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -2549,10 +2537,4 @@ function AdminDashboardInner() {
   );
 }
 
-export default function AdminDashboard() {
-  return (
-    <AdminSiteScopeProvider>
-      <AdminDashboardInner />
-    </AdminSiteScopeProvider>
-  );
-}
+export default AdminDashboardInner;

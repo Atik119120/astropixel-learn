@@ -8,21 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Settings, Image, Type, Save, Loader2 } from "lucide-react";
-import { useAdminScope } from "@/contexts/AdminSiteScopeContext";
-import AdminSiteScopeSwitcher from "@/components/admin/AdminSiteScopeSwitcher";
-
-interface SiteSetting {
-  id: string;
-  setting_key: string;
-  setting_value: string | null;
-  setting_type: string;
-}
-
-const PAYMENT_KEYS = new Set(['bkash_number', 'nagad_number', 'bkash_enabled', 'nagad_enabled']);
-
 const SiteSettingsManagement = ({ filter }: { filter?: 'general' | 'payment' } = {}) => {
   const queryClient = useQueryClient();
-  const { scope } = useAdminScope();
+  const scope = "learn";
   const [editedSettings, setEditedSettings] = useState<Record<string, string>>({});
 
   const { data: settings, isLoading } = useQuery({
