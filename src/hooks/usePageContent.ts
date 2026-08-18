@@ -1,8 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo } from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useSiteScope, SiteScope } from "@/contexts/SiteScopeContext";
 
 interface PageContent {
   id: string;
@@ -12,12 +10,9 @@ interface PageContent {
   site_scope?: string;
 }
 
-
-export const usePageContent = (pageName: string, scopeOverride?: SiteScope) => {
+export const usePageContent = (pageName: string, scopeOverride?: string) => {
   const queryClient = useQueryClient();
-  const { language } = useLanguage();
-  const detectedScope = useSiteScope();
-  const scope = scopeOverride ?? detectedScope;
+  const scope = scopeOverride ?? "learn";
 
   useEffect(() => {
     const channel = supabase
@@ -44,67 +39,34 @@ export const usePageContent = (pageName: string, scopeOverride?: SiteScope) => {
         .select('*')
         .eq('page_name', pageName)
         .eq('site_scope', scope)
-        .order('content_key');
-      if (error) throw error;
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('Error fetching page content:', error);
+        return [];
+      }
       return data as PageContent[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true
+    staleTime: 1000 * 60 * 5,
   });
 
-  const getContent = useMemo(() => {
-    return (key: string, fallback: string = '') => {
-      const content = contents?.find(c => c.content_key === key);
-      if (!content) return fallback;
-      return content.content_en || fallback;
-
-    };
-  }, [contents, language]);
-
-  const hasContent = useMemo(() => {
-    return (key: string) => {
-      return contents?.some(c => c.content_key === key) ?? false;
-    };
+  const contentMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (contents) {
+      contents.forEach(item => {
+        map.set(item.content_key, item.content_en || '');
+      });
+    }
+    return map;
   }, [contents]);
 
-  return { contents, isLoading, getContent, hasContent, language, scope };
-};
+  const getContent = (key: string, fallback: string = ''): string => {
+    return contentMap.get(key) || fallback;
+  };
 
-export const useAllPageContent = (scopeOverride?: SiteScope) => {
-  const queryClient = useQueryClient();
-  const detectedScope = useSiteScope();
-  const scope = scopeOverride ?? detectedScope;
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`all-page-content-${scope}-realtime`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'page_content' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['all-page-content', scope] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, scope]);
-
-  return useQuery({
-    queryKey: ['all-page-content', scope],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('page_content')
-        .select('*')
-        .eq('site_scope', scope)
-        .order('page_name')
-        .order('content_key');
-      if (error) throw error;
-      return data as PageContent[];
-    },
-    staleTime: 0,
-    refetchOnWindowFocus: true
-  });
+  return {
+    getContent,
+    contents,
+    isLoading,
+  };
 };

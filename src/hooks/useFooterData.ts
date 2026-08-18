@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import { useSiteScope, SiteScope } from "@/contexts/SiteScopeContext";
 
 interface FooterLink {
   id: string;
@@ -21,11 +20,9 @@ interface FooterContent {
   site_scope?: string;
 }
 
-
-export const useFooterLinks = (scopeOverride?: SiteScope) => {
+export const useFooterLinks = (scopeOverride?: string) => {
   const queryClient = useQueryClient();
-  const detectedScope = useSiteScope();
-  const scope = scopeOverride ?? detectedScope;
+  const scope = scopeOverride ?? "learn";
 
   useEffect(() => {
     const channel = supabase
@@ -50,21 +47,19 @@ export const useFooterLinks = (scopeOverride?: SiteScope) => {
       const { data, error } = await supabase
         .from('footer_links')
         .select('*')
-        .eq('is_active', true)
         .eq('site_scope', scope)
+        .eq('is_active', true)
         .order('order_index');
+
       if (error) throw error;
       return data as FooterLink[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true
   });
 };
 
-export const useFooterContent = (scopeOverride?: SiteScope) => {
+export const useFooterContent = (scopeOverride?: string) => {
   const queryClient = useQueryClient();
-  const detectedScope = useSiteScope();
-  const scope = scopeOverride ?? detectedScope;
+  const scope = scopeOverride ?? "learn";
 
   useEffect(() => {
     const channel = supabase
@@ -90,17 +85,9 @@ export const useFooterContent = (scopeOverride?: SiteScope) => {
         .from('footer_content')
         .select('*')
         .eq('site_scope', scope);
+
       if (error) throw error;
       return data as FooterContent[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true
   });
 };
-
-export const useFooterContentByKey = (key: string, _language: 'en' | 'bn' = 'en') => {
-  const { data: contents } = useFooterContent();
-  const content = contents?.find(c => c.content_key === key);
-  return content?.content_en;
-};
-
