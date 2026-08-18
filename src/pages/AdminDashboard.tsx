@@ -392,14 +392,21 @@ function AdminDashboardInner() {
   // Calculate total revenue
   const totalRevenue = courseEnrollmentStats.reduce((sum, course) => sum + course.totalSales, 0);
 
+  // 2.5s safety fallback timer for auth loading
+  const [authTimeout, setAuthTimeout] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setAuthTimeout(true), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Redirect non-admin users
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
+    if ((!authLoading || authTimeout) && (!user || !isAdmin)) {
       navigate('/admin/login');
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, authLoading, authTimeout, navigate]);
 
-  if (authLoading) {
+  if (authLoading && !authTimeout) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">

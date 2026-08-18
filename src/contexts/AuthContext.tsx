@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = React.useRef(false);
 
   const isRefreshTokenNotFoundError = (err: unknown) => {
     const anyErr = err as any;
@@ -102,10 +102,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (currentSession?.user) {
         try {
-          // Run onboarding first
-          await ensureOnboarding();
+          // Run onboarding asynchronously in background without blocking auth
+          ensureOnboarding().catch((err) => console.error('Onboarding background error:', err));
           
-          // Then fetch user data
+          // Fetch user data
           const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(currentSession.user.id);
           
           if (isMounted) {
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (isMounted) {
         setIsLoading(false);
-        setIsInitialized(true);
+        isInitializedRef.current = true;
       }
     };
 
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       // Only set loading true if we're initialized (not during initial load)
-      if (isInitialized) {
+      if (isInitializedRef.current) {
         setIsLoading(true);
       }
 
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [isInitialized]);
+  }, []);
 
   const signUp = async (email: string, password: string, fullName: string, phoneNumber?: string) => {
     const redirectUrl = `${window.location.origin}/`;
