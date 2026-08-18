@@ -399,7 +399,20 @@ function AdminDashboardInner() {
     }
   }, [user, isAdmin, authLoading, navigate]);
 
-  // No loading screen - dashboard loads directly
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-[#6D28D9] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-semibold text-slate-300">Verifying Admin Access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   const handleLogout = async () => {
     await signOut();
