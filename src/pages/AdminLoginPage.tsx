@@ -24,18 +24,21 @@ export default function AdminLoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authLoading && user && role) {
+    if (!authLoading && user) {
       if (role === 'admin') {
         navigate('/admin');
-      } else if (role === 'teacher') {
-        navigate('/teacher');
       } else {
-        toast.error('আপনি Admin বা Teacher নন');
-        navigate('/student/login');
+        // Fallback query to verify user_roles directly
+        supabase.from('user_roles').select('role').eq('user_id', user.id).then(({ data }) => {
+          if (data?.some(r => r.role === 'admin')) {
+            navigate('/admin');
+          } else if (role === 'teacher' || data?.some(r => r.role === 'teacher')) {
+            navigate('/teacher');
+          }
+        });
       }
     }
   }, [user, role, authLoading, navigate]);
-
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +50,7 @@ export default function AdminLoginPage() {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(email, password);
+    const { data: authData, error } = await signIn(email, password);
     setIsLoading(false);
 
     if (error) {
@@ -60,6 +63,7 @@ export default function AdminLoginPage() {
     }
 
     toast.success('সফলভাবে লগইন হয়েছে!');
+    navigate('/admin');
   };
 
   return (
