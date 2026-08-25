@@ -74,7 +74,7 @@ export default function StudentNoticesTab({ language }: StudentNoticesTabProps) 
         .select('notice_id')
         .eq('user_id', user.id);
       
-      const readIds = new Set(reads?.map(r => r.notice_id) || []);
+      const readIds = new Set<string>((reads?.map((r: any) => r.notice_id as string) || []));
       setReadNotices(readIds);
       
       setNotices(data || []);

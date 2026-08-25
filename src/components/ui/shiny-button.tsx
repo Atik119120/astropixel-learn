@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { motion, type AnimationProps } from "framer-motion";
+import { motion, type HTMLMotionProps } from "framer-motion";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-const animationProps: AnimationProps = {
+const animationProps: HTMLMotionProps<"button"> = {
   initial: { "--x": "100%", scale: 1 },
   animate: { "--x": "-100%", scale: 1 },
   whileTap: { scale: 0.96 },

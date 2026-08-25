@@ -4,8 +4,8 @@ import logoFullPng from "@/assets/logo-full.png";
 import learnIconJson from "@/assets/learn-preloader-icon.png.asset.json";
 import agencyLogoJson from "@/assets/astropixel-logo.png.asset.json";
 
-const learnIcon = learnIconJson.url;
-const agencyLogo = logoFullPng || agencyLogoJson.url;
+const learnIcon: string = learnIconJson.url;
+const agencyLogo: string = typeof logoFullPng === 'string' ? logoFullPng : ((logoFullPng as any)?.src || agencyLogoJson.url);
 const LEARN_ROUTES = ["/courses", "/instructors", "/learn-about", "/learn-contact"];
 
 const Preloader = memo(({ onComplete }: { onComplete: () => void }) => {

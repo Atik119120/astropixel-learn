@@ -51,8 +51,8 @@ export default function LessonComments({ videoId, courseId, userId, userName, us
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
 
-      const profileMap = new Map(
-        (profiles || []).map((p: any) => [p.user_id, { name: p.full_name, avatar: p.avatar_url }])
+      const profileMap = new Map<string, { name: string; avatar: string }>(
+        (profiles || []).map((p: any) => [p.user_id, { name: p.full_name || 'User', avatar: p.avatar_url || '' }])
       );
 
       // Build threaded comments
