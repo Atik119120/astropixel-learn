@@ -702,16 +702,9 @@ const CoursesPage = () => {
                 );
               })()}
             </h2>
-            <p className="text-muted-foreground text-sm max-w-xl mx-auto mb-3">
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
               {isBn ? "পছন্দের স্কিল বেছে নিন এবং আজই প্র্যাক্টিক্যাল প্রজেক্টে যুক্ত হন" : "Pick your desired skill and jump into practical projects today"}
             </p>
-            <Link
-              to="/courses"
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary text-primary-foreground font-semibold text-xs shadow-md hover:opacity-90 transition-opacity"
-            >
-              <span>{isBn ? "সকল কোর্সসমূহ দেখুন" : "View All Courses Catalog"}</span>
-              <ArrowRight size={14} />
-            </Link>
           </motion.div>
 
           {/* Category pills */}
@@ -776,9 +769,22 @@ const CoursesPage = () => {
           )}
 
           {!coursesLoading && displayCourses.length > 0 && !isAllCoursesRoute && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-7xl mx-auto">
-              {displayCourses.map((course, index) => renderCourseCard(course, index))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-7xl mx-auto">
+                {displayCourses.map((course, index) => renderCourseCard(course, index))}
+              </div>
+
+              {/* View All Courses Catalog Button - Centered below course cards */}
+              <div className="flex justify-center mt-10">
+                <Link
+                  to="/courses"
+                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 text-white font-bold text-sm shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300 group"
+                >
+                  <span>{isBn ? "সকল কোর্সসমূহ দেখুন" : "View All Courses Catalog"}</span>
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </>
           )}
 
           {!coursesLoading && allMapped.length > 0 && isAllCoursesRoute && (
