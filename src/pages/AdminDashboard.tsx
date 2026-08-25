@@ -65,8 +65,11 @@ import CourseManagement from '@/components/admin/CourseManagement';
 import SiteSettingsManagement from '@/components/admin/SiteSettingsManagement';
 import PageContentManagement from '@/components/admin/PageContentManagement';
 import LearnPagesEditor from '@/components/admin/LearnPagesEditor';
+import AdminSiteScopeSwitcher from '@/components/admin/AdminSiteScopeSwitcher';
 import learnLogoAssetJson from '@/assets/learn-with-alphazero-logo.png.asset.json';
+import astropixelLogoAssetJson from '@/assets/astropixel-logo.png.asset.json';
 const learnLogo = learnLogoAssetJson.url;
+const alphazeroLogoAsset = astropixelLogoAssetJson;
 import TeacherManagement from '@/components/admin/TeacherManagement';
 import EmailManagement from '@/components/admin/EmailManagement';
 import ApiKeyManagement from '@/components/admin/ApiKeyManagement';
@@ -83,7 +86,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const CHART_COLORS = ['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444', '#ec4899'];
 
 function AdminDashboardInner() {
-  const scope = "learn";
+  const [scope, setScope] = useState<'learn' | 'agency' | 'main'>('learn');
   const { user, profile, signOut, isAdmin, isLoading: authLoading } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -854,7 +857,7 @@ function AdminDashboardInner() {
     { id: 'profile', icon: User, label: language === 'bn' ? 'Admin' : 'Admins', scopeTag: 'both' as const },
   ];
 
-  const inScope = (t: 'learn' | 'agency' | 'both') => t === 'both' || t === scope;
+  const inScope = (t: 'learn' | 'agency' | 'both') => t === 'both' || t === scope || (t === 'agency' && (scope as string) === 'main');
   const lmsCoreItems = lmsCoreItemsAll.filter(i => inScope(i.scopeTag));
   const lmsMoreItems = lmsMoreItemsAll.filter(i => inScope(i.scopeTag));
   const cmsItems = cmsItemsAll.filter(i => inScope(i.scopeTag));
@@ -1094,7 +1097,7 @@ function AdminDashboardInner() {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
-            {scope === 'agency' ? (
+            {(scope as string) === 'agency' || (scope as string) === 'main' ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
