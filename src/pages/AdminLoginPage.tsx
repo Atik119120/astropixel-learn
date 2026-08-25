@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,7 +51,7 @@ export default function AdminLoginPage() {
     }
 
     setIsLoading(true);
-    const { data: authData, error } = await signIn(email, password);
+    const { error } = await signIn(email, password);
     setIsLoading(false);
 
     if (error) {

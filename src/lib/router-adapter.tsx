@@ -31,9 +31,9 @@ export const useLocation = () => {
   };
 };
 
-export const useParams = () => {
+export const useParams = <T extends Record<string, string | undefined> = Record<string, string>>() => {
   const params = useNextParams();
-  return (params || {}) as Record<string, string>;
+  return (params || {}) as unknown as T;
 };
 
 export const Link = React.forwardRef<HTMLAnchorElement, any>(

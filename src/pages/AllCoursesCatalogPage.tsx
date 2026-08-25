@@ -33,7 +33,7 @@ const AllCoursesCatalogPage = () => {
   const { language } = useLanguage();
   const isBn = language === "bn";
   const { user, profile } = useAuth();
-  const { courses, loading: coursesLoading } = usePublicCourses();
+  const { courses, isLoading: coursesLoading } = usePublicCourses();
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -43,8 +43,8 @@ const AllCoursesCatalogPage = () => {
   // Filter courses based on search query and active category
   const filteredCourses = useMemo(() => {
     return courses.filter((c) => {
-      const titleBn = c.titleBn || "";
-      const titleEn = c.titleEn || "";
+      const titleBn = (c as any).titleBn || c.title || "";
+      const titleEn = (c as any).titleEn || c.title || "";
       const matchesSearch = 
         !searchQuery.trim() || 
         titleBn.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -68,8 +68,8 @@ const AllCoursesCatalogPage = () => {
     
     return cats.map((cat) => {
       const matchedItems = courses.filter((c) => {
-        const titleBn = c.titleBn || "";
-        const titleEn = c.titleEn || "";
+        const titleBn = (c as any).titleBn || c.title || "";
+        const titleEn = (c as any).titleEn || c.title || "";
         const matchesCat = cat.match!.test(titleEn) || cat.match!.test(titleBn);
         if (matchesCat && !seen.has(c.id)) {
           seen.add(c.id);
@@ -93,7 +93,7 @@ const AllCoursesCatalogPage = () => {
     const coursePrice = course.price || 0;
     const isFree = coursePrice === 0;
     const landingHref = (course as any).landing_slug ? `/courses/${(course as any).landing_slug}` : null;
-    const CategoryIcon = courseIconMap[course.category || "web"] || BookOpen;
+    const CategoryIcon = courseIconMap[(course as any).category || "web"] || BookOpen;
 
     return (
       <div 
@@ -106,7 +106,7 @@ const AllCoursesCatalogPage = () => {
             {course.thumbnail_url ? (
               <img 
                 src={course.thumbnail_url} 
-                alt={isBn ? course.titleBn : course.titleEn}
+                alt={isBn ? ((course as any).titleBn || course.title) : ((course as any).titleEn || course.title)}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
@@ -126,7 +126,7 @@ const AllCoursesCatalogPage = () => {
             {course.thumbnail_url ? (
               <img 
                 src={course.thumbnail_url} 
-                alt={isBn ? course.titleBn : course.titleEn}
+                alt={isBn ? ((course as any).titleBn || course.title) : ((course as any).titleEn || course.title)}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
@@ -148,12 +148,12 @@ const AllCoursesCatalogPage = () => {
           {landingHref ? (
             <Link to={landingHref}>
               <h3 className="text-base font-display font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                {isBn ? course.titleBn : course.titleEn}
+                {isBn ? ((course as any).titleBn || course.title) : ((course as any).titleEn || course.title)}
               </h3>
             </Link>
           ) : (
             <h3 className="text-base font-display font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-              {isBn ? course.titleBn : course.titleEn}
+              {isBn ? ((course as any).titleBn || course.title) : ((course as any).titleEn || course.title)}
             </h3>
           )}
 

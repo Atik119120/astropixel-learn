@@ -1835,22 +1835,22 @@ function AdminDashboardInner() {
 
           {/* Works Tab */}
           <TabsContent value="works" className="space-y-6">
-            <WorksManagement />
+            <PageContentManagement lockedPage="works" />
           </TabsContent>
 
           {/* Team Tab */}
           <TabsContent value="team" className="space-y-6">
-            <TeamManagement />
+            <PageContentManagement lockedPage="team" />
           </TabsContent>
 
           {/* Services Tab */}
           <TabsContent value="services" className="space-y-6">
-            <ServicesManagement />
+            <PageContentManagement lockedPage="services" />
           </TabsContent>
 
           {/* Homepage Editor */}
           <TabsContent value="homepage" className="space-y-6">
-            <HomepageEditor />
+            <PageContentManagement lockedPage="home" />
           </TabsContent>
 
           {/* Learn Pages Editor */}
@@ -1861,20 +1861,17 @@ function AdminDashboardInner() {
 
           {/* Contact Tab */}
           <TabsContent value="contact" className="space-y-6">
-            <ContactInfoManagement />
+            <PageContentManagement lockedPage="contact" />
           </TabsContent>
 
           {/* About Tab */}
           <TabsContent value="about" className="space-y-6">
-            <AboutPageEditor />
+            <PageContentManagement lockedPage="about" />
           </TabsContent>
-
-
-
 
           {/* Footer Tab */}
           <TabsContent value="footer" className="space-y-6">
-            <FooterManagement />
+            <PageContentManagement lockedPage="footer" />
           </TabsContent>
 
           {/* Email Tab */}
