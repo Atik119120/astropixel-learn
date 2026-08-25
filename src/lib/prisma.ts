@@ -1,3 +1,5 @@
+import type { PrismaClient } from '@prisma/client';
+
 const createMockTable = () => ({
   findUnique: async () => null,
   findMany: async () => [],
@@ -33,11 +35,11 @@ function getPrismaClient() {
   }
 }
 
-export const prisma = new Proxy({}, {
+export const prisma = (new Proxy({}, {
   get: (_target, prop) => {
     const client = getPrismaClient();
     return client[prop];
   },
-});
+}) as unknown) as PrismaClient;
 
 export default prisma;
