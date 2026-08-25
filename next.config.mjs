@@ -7,7 +7,6 @@ const __dirname = path.dirname(__filename);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
   images: {
     unoptimized: true,
   },

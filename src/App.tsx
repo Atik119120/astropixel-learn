@@ -13,30 +13,30 @@ import SmoothScroll from "@/components/SmoothScroll";
 import ScrollReveal from "@/components/ScrollReveal";
 
 // Primary Learn Pages
-import CoursesPage from "./pages/CoursesPage";
-import AllCoursesCatalogPage from "./pages/AllCoursesCatalogPage";
-import LearnAboutPage from "./pages/LearnAboutPage";
-import LearnContactPage from "./pages/LearnContactPage";
-import NotFound from "./pages/NotFound";
+import CoursesPage from "./views/CoursesPage";
+import AllCoursesCatalogPage from "./views/AllCoursesCatalogPage";
+import LearnAboutPage from "./views/LearnAboutPage";
+import LearnContactPage from "./views/LearnContactPage";
+import NotFound from "./views/NotFound";
 
 // Lazy-loaded LMS Dashboards & Features
-const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
-const StudentLoginPage = lazy(() => import("./pages/StudentLoginPage"));
-const TeacherLoginPage = lazy(() => import("./pages/TeacherLoginPage"));
-const DashboardPage = lazy(() => import("./pages/DashboardPage"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
-const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
-const MyCertificatesPage = lazy(() => import("./pages/MyCertificatesPage"));
-const CourseViewerPage = lazy(() => import("./pages/CourseViewerPage"));
-const CertificatePage = lazy(() => import("./pages/CertificatePage"));
-const VerifyCertificatePage = lazy(() => import("./pages/VerifyCertificatePage"));
-const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const PaymentCallbackPage = lazy(() => import("./pages/PaymentCallbackPage"));
-const PaymentCancelPage = lazy(() => import("./pages/PaymentCancelPage"));
-const CustomCheckoutPage = lazy(() => import("./pages/CustomCheckoutPage"));
-const CourseLandingPage = lazy(() => import("./pages/CourseLandingPage"));
+const AdminLoginPage = lazy(() => import("./views/AdminLoginPage"));
+const StudentLoginPage = lazy(() => import("./views/StudentLoginPage"));
+const TeacherLoginPage = lazy(() => import("./views/TeacherLoginPage"));
+const DashboardPage = lazy(() => import("./views/DashboardPage"));
+const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
+const StudentDashboard = lazy(() => import("./views/StudentDashboard"));
+const TeacherDashboard = lazy(() => import("./views/TeacherDashboard"));
+const MyCertificatesPage = lazy(() => import("./views/MyCertificatesPage"));
+const CourseViewerPage = lazy(() => import("./views/CourseViewerPage"));
+const CertificatePage = lazy(() => import("./views/CertificatePage"));
+const VerifyCertificatePage = lazy(() => import("./views/VerifyCertificatePage"));
+const ForgotPasswordPage = lazy(() => import("./views/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./views/ResetPasswordPage"));
+const PaymentCallbackPage = lazy(() => import("./views/PaymentCallbackPage"));
+const PaymentCancelPage = lazy(() => import("./views/PaymentCancelPage"));
+const CustomCheckoutPage = lazy(() => import("./views/CustomCheckoutPage"));
+const CourseLandingPage = lazy(() => import("./views/CourseLandingPage"));
 
 const queryClient = new QueryClient();
 
