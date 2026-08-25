@@ -991,7 +991,7 @@ function AdminDashboardInner() {
       </aside>
 
       {/* Main Content Area */}
-      <main className={`ml-24 md:ml-64 p-4 md:p-6 min-h-screen transition-all duration-300 ${isAssistantOpen ? 'mr-[380px]' : ''}`}>
+      <main className="ml-24 md:ml-64 p-4 md:p-6 min-h-screen transition-all duration-300">
         {/* Top Bar with Stats */}
         <div className="mb-6">
           {/* Greeting */}
@@ -1011,22 +1011,6 @@ function AdminDashboardInner() {
             </div>
             <AdminSiteScopeSwitcher />
             <div className="flex items-center gap-2">
-              {/* Alpha AI Button */}
-              <button
-                onClick={() => setIsAssistantOpen(!isAssistantOpen)}
-                className={`h-9 px-3.5 rounded-xl flex items-center gap-2 text-sm font-semibold transition-all duration-300 group ${
-                  isAssistantOpen
-                    ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
-                    : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 text-white shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.03]'
-                }`}
-              >
-                <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                <span className="hidden sm:inline tracking-wide">Alpha AI</span>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
-                </span>
-              </button>
               {/* Profile Button */}
               <Button 
                 variant="outline" 
@@ -2541,9 +2525,6 @@ function AdminDashboardInner() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* AI Assistant Side Panel */}
-      <AdminAssistant isOpen={isAssistantOpen} onToggle={() => setIsAssistantOpen(false)} />
     </div>
   );
 }
