@@ -271,16 +271,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    let targetRole: AppRole = 'student';
     const lowerEmail = (email || '').toLowerCase().trim();
-    if (lowerEmail.includes('admin')) {
-      targetRole = 'admin';
-    } else if (lowerEmail.includes('teacher')) {
-      targetRole = 'teacher';
-    } else {
-      targetRole = 'student';
+
+    // 1. Attempt real authentication with Supabase database accounts
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: lowerEmail,
+        password,
+      });
+
+      if (!error && data?.user) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('active_app_role');
+        }
+        const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(data.user.id);
+        setUser(data.user);
+        setProfile(fetchedProfile);
+        setRole(fetchedRole);
+        return { error: null };
+      }
+    } catch (e) {
+      console.warn("Supabase auth sign-in error:", e);
     }
-    return await signInAsRole(targetRole, email, password);
+
+    // 2. Official demo fallback accounts for instant testing
+    if (lowerEmail === 'admin@astropixel.online' && (password === 'admin123' || password === 'admin')) {
+      return await signInAsRole('admin', email, password);
+    }
+    if (lowerEmail === 'teacher@astropixel.online' && (password === 'teacher123' || password === 'teacher')) {
+      return await signInAsRole('teacher', email, password);
+    }
+    if (lowerEmail === 'student@astropixel.online' && (password === 'student123' || password === 'student')) {
+      return await signInAsRole('student', email, password);
+    }
+
+    return { error: new Error('ইমেইল বা পাসওয়ার্ড ভুল') };
   };
 
   const signOut = async () => {
