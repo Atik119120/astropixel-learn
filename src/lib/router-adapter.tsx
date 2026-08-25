@@ -49,6 +49,13 @@ export const Link = React.forwardRef<HTMLAnchorElement, any>(
 
 Link.displayName = "Link";
 
+export interface NavLinkProps {
+  to: string;
+  className?: string | ((props: { isActive: boolean; isPending: boolean }) => string);
+  children?: React.ReactNode;
+  [key: string]: any;
+}
+
 export const NavLink = Link;
 export const BrowserRouter = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 export const Routes = ({ children }: { children: React.ReactNode }) => <>{children}</>;
