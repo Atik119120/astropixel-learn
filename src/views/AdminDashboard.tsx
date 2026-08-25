@@ -956,15 +956,6 @@ function AdminDashboardInner() {
           </div>
 
 
-          {/* CMS Section */}
-          <div className="mb-2">
-            <p className="hidden md:block text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest px-2 mb-1.5">
-              {language === 'bn' ? 'ওয়েবসাইট' : 'Website'}
-            </p>
-            <div className="space-y-0.5">
-              {cmsItems.map((item) => renderNavButton(item, 'from-violet-500 to-purple-500'))}
-            </div>
-          </div>
 
           {/* Settings - single entry, opens Settings hub */}
           <div>
