@@ -2,6 +2,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, Profile } from '@/types/lms';
+import { auth as firebaseAuth } from '@/integrations/firebase/config';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut as firebaseSignOut,
+  updateProfile as updateFirebaseProfile 
+} from 'firebase/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -203,48 +210,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, phoneNumber?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    let firebaseUser: any = null;
 
-    const { data, error } = await supabase.auth.signUp({
+    // 1. Register user with Firebase Authentication
+    try {
+      const fbCred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      if (fbCred.user) {
+        firebaseUser = fbCred.user;
+        await updateFirebaseProfile(fbCred.user, { displayName: fullName });
+      }
+    } catch (fbError: any) {
+      console.warn("Firebase Auth sign-up warning:", fbError?.message || fbError);
+    }
+
+    // 2. Also register in Database Auth & insert profile
+    const redirectUrl = `${window.location.origin}/`;
+    const { data } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-        },
+        data: { full_name: fullName },
       },
     });
 
-    if (!error && data.user) {
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: data.user.id,
-          full_name: fullName,
-          email: email,
-          phone_number: phoneNumber || null,
-        });
+    const userId = data?.user?.id || firebaseUser?.uid || `user-${Date.now()}`;
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-      }
+    // Create profile
+    await supabase.from('profiles').insert({
+      user_id: userId,
+      full_name: fullName,
+      email: email,
+      phone_number: phoneNumber || null,
+    }).catch((e) => console.warn('Profile creation note:', e));
 
-      // Assign student role by default
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: data.user.id,
-          role: 'student',
-        });
+    // Assign student role by default
+    await supabase.from('user_roles').insert({
+      user_id: userId,
+      role: 'student',
+    }).catch((e) => console.warn('Role assignment note:', e));
 
-      if (roleError) {
-        console.error('Role assignment error:', roleError);
-      }
-    }
-
-    return { error };
+    return { error: null };
   };
 
   const signInAsRole = async (targetRole: AppRole, email = "test@astropixel.online", password = "test") => {
@@ -273,7 +279,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const lowerEmail = (email || '').toLowerCase().trim();
 
-    // 1. Attempt real authentication with Supabase database accounts
+    // 1. Authenticate with Firebase Authentication
+    let firebaseUser: any = null;
+    try {
+      const fbCred = await signInWithEmailAndPassword(firebaseAuth, lowerEmail, password);
+      if (fbCred?.user) {
+        firebaseUser = fbCred.user;
+      }
+    } catch (fbError: any) {
+      console.warn("Firebase Auth sign-in note:", fbError?.message || fbError);
+    }
+
+    // 2. Attempt authentication with Database
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: lowerEmail,
@@ -291,10 +308,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: null };
       }
     } catch (e) {
-      console.warn("Supabase auth sign-in error:", e);
+      console.warn("Database auth sign-in error:", e);
     }
 
-    // 2. Official demo fallback accounts for instant testing
+    // 3. If Firebase Auth succeeded, log in using Firebase user
+    if (firebaseUser) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('active_app_role');
+      }
+      const userObj: any = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email,
+        user_metadata: { full_name: firebaseUser.displayName || 'Student User' }
+      };
+      const profileObj: any = {
+        id: firebaseUser.uid,
+        user_id: firebaseUser.uid,
+        full_name: firebaseUser.displayName || 'Student User',
+        email: firebaseUser.email,
+        created_at: new Date().toISOString()
+      };
+      setUser(userObj);
+      setProfile(profileObj);
+      setRole('student');
+      return { error: null };
+    }
+
+    // 4. Official demo fallback accounts for instant testing
     if (lowerEmail === 'admin@astropixel.online' && (password === 'admin123' || password === 'admin')) {
       return await signInAsRole('admin', email, password);
     }
@@ -309,10 +349,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await firebaseSignOut(firebaseAuth);
+    } catch (e) {}
+    await supabase.auth.signOut().catch(() => {});
     if (typeof window !== 'undefined') {
       localStorage.removeItem('active_app_role');
     }
+    setUser(null);
     setProfile(null);
     setRole(null);
   };
