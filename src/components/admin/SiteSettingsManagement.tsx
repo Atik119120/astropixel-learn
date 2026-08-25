@@ -90,10 +90,10 @@ const SiteSettingsManagement = ({ filter }: { filter?: 'general' | 'payment' } =
     setEditedSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = (key: string, type: string) => {
+  const handleSave = (key: string, type?: string) => {
     const value = editedSettings[key];
     if (value !== undefined) {
-      updateMutation.mutate({ key, value, type });
+      updateMutation.mutate({ key, value, type: type || 'text' });
       setEditedSettings(prev => {
         const newState = { ...prev };
         delete newState[key];
@@ -102,9 +102,9 @@ const SiteSettingsManagement = ({ filter }: { filter?: 'general' | 'payment' } =
     }
   };
 
-  const handleToggle = (key: string, currentValue: string | null, type: string) => {
+  const handleToggle = (key: string, currentValue: string | null, type?: string) => {
     const newValue = currentValue === 'true' ? 'false' : 'true';
-    updateMutation.mutate({ key, value: newValue, type });
+    updateMutation.mutate({ key, value: newValue, type: type || 'toggle' });
   };
 
 
@@ -134,7 +134,7 @@ const SiteSettingsManagement = ({ filter }: { filter?: 'general' | 'payment' } =
     return descriptions[key] || '';
   };
 
-  const getSettingIcon = (type: string) => {
+  const getSettingIcon = (type?: string) => {
     switch (type) {
       case 'image':
         return <Image className="h-4 w-4" />;
