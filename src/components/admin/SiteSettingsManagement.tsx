@@ -13,9 +13,16 @@ interface SiteSetting {
   id: string;
   setting_key: string;
   setting_value: string | null;
+  setting_type?: string;
   site_scope?: string;
   description?: string | null;
 }
+
+const PAYMENT_KEYS = new Set([
+  'bkash_marchent_id', 'bkash_secret', 'bkash_key', 
+  'nagad_marchent_id', 'payment_enabled', 'bkash_enabled', 
+  'nagad_enabled', 'manual_bkash_number', 'manual_nagad_number'
+]);
 
 const SiteSettingsManagement = ({ filter }: { filter?: 'general' | 'payment' } = {}) => {
   const queryClient = useQueryClient();
