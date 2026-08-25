@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Settings, Image, Type, Save, Loader2 } from "lucide-react";
+import AdminSiteScopeSwitcher from "@/components/admin/AdminSiteScopeSwitcher";
 
 interface SiteSetting {
   id: string;
