@@ -1159,10 +1159,10 @@ function AdminDashboardInner() {
                     { id: 'students', icon: Users, label: 'Students', desc: 'Enrolled users', gradient: 'from-emerald-500 to-teal-500' },
                     { id: 'teachers', icon: GraduationCap, label: 'Teachers', desc: 'Instructors', gradient: 'from-violet-500 to-purple-500' },
                     { id: 'requests', icon: Mail, label: 'Requests', desc: 'Enrollment queue', gradient: 'from-amber-500 to-orange-500' },
-                    { id: 'analytics', icon: BarChart3, label: 'Analytics', desc: 'Traffic & sales', gradient: 'from-rose-500 to-pink-500' },
-                    { id: 'email', icon: Send, label: 'Email', desc: 'Outbound mail', gradient: 'from-indigo-500 to-blue-500' },
-                    { id: 'landing', icon: Sparkles, label: 'Landing', desc: 'Learn landing page', gradient: 'from-fuchsia-500 to-pink-500' },
-                    { id: 'settings', icon: Settings, label: 'Settings', desc: 'Site config', gradient: 'from-slate-500 to-slate-700' },
+                    { id: 'banner-management', icon: Image, label: 'Hero Banners', desc: 'Slider banners', gradient: 'from-purple-500 to-indigo-500' },
+                    { id: 'instructor-management', icon: GraduationCap, label: 'Instructors', desc: 'Home trainers', gradient: 'from-pink-500 to-rose-500' },
+                    { id: 'contact-management', icon: Phone, label: 'Contact Info', desc: 'Branch & socials', gradient: 'from-emerald-500 to-teal-500' },
+                    { id: 'about-management', icon: Info, label: 'About & Team', desc: 'Mission & members', gradient: 'from-amber-500 to-orange-500' },
                   ].map((card) => (
                     <button
                       key={card.id}
