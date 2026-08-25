@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
 
-const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || 'ayqbpqgahtycrncbknvj';
+import { SUPABASE_PROJECT_ID as PROJECT_REF } from "@/lib/env";
 const FN_BASE = `https://${PROJECT_REF}.functions.supabase.co`;
 
 interface Info {

@@ -8,6 +8,13 @@
 *.pem
 *.key
 
+# Build & Dependency output
+node_modules
+dist
+dist-ssr
+.next
+*.tsbuildinfo
+
 # Logs
 logs
 *.log
@@ -16,11 +23,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-# Build & Dependency output
-node_modules
-dist
-dist-ssr
 
 # Editor directories and files
 .vscode/*

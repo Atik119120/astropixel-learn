@@ -49,7 +49,7 @@ const translations = {
 };
 
 export default function TeacherLoginPage() {
-  const { user, role, isLoading, signIn, profile } = useAuth();
+  const { user, role, isLoading, signIn, signInAsRole, profile } = useAuth();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
@@ -133,14 +133,7 @@ export default function TeacherLoginPage() {
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
       </div>
 
-      {/* Top controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-1 z-20">
-        {/* Language toggle removed — English only */}
 
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-      </div>
 
       <div className="w-full max-w-sm relative z-10">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors text-sm">

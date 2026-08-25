@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/lib/env';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -325,7 +326,7 @@ export default function CourseManagement({ courses, coursesLoading, refetchCours
         const { data: { session } } = await supabase.auth.getSession();
 
         // Step 1: Get signed credentials
-        const signRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sign-upload`, {
+        const signRes = await fetch(`${SUPABASE_URL}/functions/v1/sign-upload`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,

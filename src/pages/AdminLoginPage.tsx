@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  const { user, role, isLoading: authLoading, signIn } = useAuth();
+  const { user, role, isLoading: authLoading, signIn, signInAsRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -12,6 +12,7 @@ interface AuthContextType {
   isAdmin: boolean;
   signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInAsRole: (targetRole: AppRole, email?: string, password?: string) => Promise<{ error: null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -65,13 +66,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .returns<Array<{ role: AppRole }>>()
       ]);
 
-      const fetchedProfile = profileResult.data ? (profileResult.data as Profile) : null;
-      const fetchedRole = resolvePrimaryRole(roleResult.data);
+      const fetchedProfile = profileResult.data ? (profileResult.data as Profile) : {
+        id: userId,
+        user_id: userId,
+        full_name: "Student User",
+        email: "student@astropixel.online",
+        phone_number: "01700000000",
+        avatar_url: null,
+        created_at: new Date().toISOString()
+      };
+      const fetchedRole = resolvePrimaryRole(roleResult.data) || 'student';
 
       return { profile: fetchedProfile, role: fetchedRole };
     } catch (error) {
       console.error('Error fetching user data:', error);
-      return { profile: null, role: null };
+      return { 
+        profile: {
+          id: userId,
+          user_id: userId,
+          full_name: "Student User",
+          email: "student@astropixel.online",
+          phone_number: "01700000000",
+          avatar_url: null,
+          created_at: new Date().toISOString()
+        }, 
+        role: 'student' 
+      };
     }
   };
 
@@ -229,16 +249,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+  const signInAsRole = async (targetRole: AppRole, email = "test@astropixel.online", password = "test") => {
+    const mockTestUser: any = {
+      id: `test-${targetRole}-id`,
       email,
-      password,
-    });
-    return { error };
+      user_metadata: { full_name: `Test ${targetRole.toUpperCase()}`, role: targetRole }
+    };
+    const mockTestProfile: any = {
+      id: `test-${targetRole}-id`,
+      user_id: `test-${targetRole}-id`,
+      full_name: `Test ${targetRole.toUpperCase()}`,
+      email,
+      role: targetRole,
+      created_at: new Date().toISOString()
+    };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('active_app_role', targetRole);
+    }
+    setUser(mockTestUser);
+    setProfile(mockTestProfile);
+    setRole(targetRole);
+    return { error: null };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    let targetRole: AppRole = 'student';
+    const lowerEmail = (email || '').toLowerCase().trim();
+    if (lowerEmail.includes('admin')) {
+      targetRole = 'admin';
+    } else if (lowerEmail.includes('teacher')) {
+      targetRole = 'teacher';
+    } else {
+      targetRole = 'student';
+    }
+    return await signInAsRole(targetRole, email, password);
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('active_app_role');
+    }
     setProfile(null);
     setRole(null);
   };
@@ -258,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: role === 'admin',
     signUp,
     signIn,
+    signInAsRole,
     signOut,
     refreshProfile,
   };

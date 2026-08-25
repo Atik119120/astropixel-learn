@@ -1,25 +1,52 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Mail, Phone, MessageCircle, Send, GraduationCap, HelpCircle, BookOpen, Clock, MapPin, Sparkles, ArrowUpRight } from "lucide-react";
+import { Mail, Phone, MessageCircle, Send, GraduationCap, HelpCircle, BookOpen, Clock, MapPin, Sparkles, ArrowUpRight, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFooterContent } from "@/hooks/useFooterData";
 import { usePageContent } from "@/hooks/usePageContent";
+import { submitContactMessageAction } from "@/app/actions/contact";
+import { toast } from "sonner";
 
 const LearnContactPage = () => {
   const { language } = useLanguage();
   const { data: footerContents } = useFooterContent();
   const { getContent: getPageContent } = usePageContent("learn-contact", "learn");
   const [formData, setFormData] = useState({ name: "", email: "", topic: "general", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isBn = language === "bn";
   const t = (bn: string, en: string) => (isBn ? bn : en);
   const cms = (bnKey: string, enKey: string, bnFb: string, enFb: string) =>
     isBn ? (getPageContent(bnKey) || bnFb) : (getPageContent(enKey) || enFb);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Learn contact form:", formData);
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error(t("অনুগ্রহ করে সকল ঘর পূরণ করুন", "Please fill in all required fields"));
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const result = await submitContactMessageAction({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.topic,
+        message: formData.message,
+      });
+
+      if (result.success) {
+        toast.success(t("আপনার বার্তা সফলভাবে জমা দেওয়া হয়েছে!", "Your message has been sent successfully!"));
+        setFormData({ name: "", email: "", topic: "general", message: "" });
+      } else {
+        toast.error(result.error || t("বার্তা পাঠাতে সমস্যা হয়েছে", "Failed to send message"));
+      }
+    } catch (err: any) {
+      toast.error(err?.message || t("বার্তা পাঠাতে সমস্যা হয়েছে", "Failed to send message"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -53,24 +80,13 @@ const LearnContactPage = () => {
     <Layout>
       <main className="min-h-screen bg-background">
       {/* Hero */}
-      <section className="relative pt-28 pb-8 lg:pt-36 lg:pb-10 overflow-hidden">
+      <section className="relative pt-12 pb-8 lg:pt-16 lg:pb-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.05] via-background to-background" />
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm mb-4 shadow-sm shadow-primary/10">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-              </span>
-              <GraduationCap size={14} className="text-primary" />
-              <span className="text-xs font-bold tracking-[0.15em] uppercase text-primary">
-                {cms("hero.badge.bn", "hero.badge.en", "লার্ন সাপোর্ট", "Learn Support")}
-              </span>
-            </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-3xl lg:text-5xl font-display font-bold mb-3 leading-[1.1] tracking-tight">
               {cms("hero.title.bn", "hero.title.en", "শিখতে চান? ", "Learning? ")}

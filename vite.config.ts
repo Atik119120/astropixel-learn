@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 8088,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
@@ -15,8 +15,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  esbuild: {
+    drop: mode === "production" ? ["console", "debugger"] : [],
+    legalComments: "none",
+  },
   build: {
-    target: "esnext",
+    target: "es2020",
+    minify: "esbuild",
+    cssMinify: true,
     cssCodeSplit: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {

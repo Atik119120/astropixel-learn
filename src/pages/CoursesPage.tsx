@@ -12,11 +12,11 @@ import instructorShafiul from "@/assets/instructors/shafiul.png.asset.json";
 import instructorPapiya from "@/assets/instructors/papiya.png.asset.json";
 import instructorPrantik from "@/assets/instructors/prantik.png.asset.json";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { 
   GraduationCap, Monitor, Palette, Video, Camera, TrendingUp, Code, Sparkles, Bot, Globe,
   CheckCircle2, BookOpen, Star, Zap, Target, Award, Clock, Wrench, Lock, Loader2, LucideIcon,
-  ArrowRight, ArrowLeft, Users, Play
+  ArrowRight, ArrowLeft, Users, Play, ChevronLeft, ChevronRight
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import learnLogoAssetJson from "@/assets/learn-with-alphazero-logo.png.asset.json";
@@ -332,6 +332,77 @@ const CoursesPage = () => {
 
   const heroRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Hero Carousel Slides definition
+  const heroSlides = useMemo(
+    () => [
+      {
+        id: 1,
+        image: "https://nid.edu.bd/wp-content/uploads/2024/05/BBA-web-slider-01-01-01-scaled-e1753431207269.jpg",
+        eyebrowBn: getPageContent("hero.eyebrow.bn") || "ডিজিটাল স্কিল একাডেমি",
+        eyebrowEn: getPageContent("hero.eyebrow.en") || "Digital Skill Academy",
+        title1Bn: getPageContent("hero.title1.bn") || "এক প্ল্যাটফর্ম।",
+        title1En: getPageContent("hero.title1.en") || "One platform.",
+        title2Bn: getPageContent("hero.title2.bn") || "প্রতিটি ডিজিটাল স্কিল।",
+        title2En: getPageContent("hero.title2.en") || "every digital skill.",
+        title3Bn: getPageContent("hero.title3.bn") || "অসীম সম্ভাবনা।",
+        title3En: getPageContent("hero.title3.en") || "Endless opportunities.",
+        subtitleBn: getPageContent("hero.subtitle.bn") || "AI ও গ্রাফিক ডিজাইন থেকে প্রোগ্রামিং, ওয়েব ডেভেলপমেন্ট, ডিজিটাল মার্কেটিং, ভিডিও এডিটিং এবং ফ্রিল্যান্সিং—সফল ডিজিটাল ক্যারিয়ার গড়তে যা প্রয়োজন সব শিখুন।",
+        subtitleEn: getPageContent("hero.subtitle.en") || "From AI and graphic design to programming, web development, digital marketing, video editing and freelancing — everything you need to build a thriving digital career.",
+        ctaBn: getPageContent("hero.cta.bn") || "কোর্স দেখুন",
+        ctaEn: getPageContent("hero.cta.en") || "Browse Courses",
+        ctaHref: "#courses"
+      },
+      {
+        id: 2,
+        image: "https://nid.edu.bd/wp-content/uploads/2024/04/Diploma-course-web-slider-01-01-scaled.jpg",
+        eyebrowBn: "AI ও ভাইব কোডিং মাস্টারি",
+        eyebrowEn: "AI & Vibe Coding Mastery",
+        title1Bn: "কোডিং ছাড়া",
+        title1En: "Build apps",
+        title2Bn: "স্মার্ট ওয়েবসাইট বানান।",
+        title2En: "without coding.",
+        title3Bn: "প্রম্পট টু প্রফেশনাল ডেভেলপমেন্ট।",
+        title3En: "Prompt to Production.",
+        subtitleBn: "AI টুলস ব্যবহার করে খুব সহজে নো-কোড ও প্রম্পট ইঞ্জিনিয়ারিংয়ের মাধ্যমে রেসপন্সিভ ওয়েবসাইট ও প্রজেক্ট বিল্ড করা শিখুন।",
+        subtitleEn: "Learn to build responsive websites & web apps using cutting-edge AI tools, no-code platforms, and prompt engineering.",
+        ctaBn: "ভাইব কোডিং কোর্স",
+        ctaEn: "Vibe Coding Course",
+        ctaHref: "/vibe-coding"
+      },
+      {
+        id: 3,
+        image: "https://nid.edu.bd/wp-content/uploads/2024/05/BBA-web-slider-01-01-01-scaled-e1753431207269.jpg",
+        eyebrowBn: "১০০% অনলাইন ও সার্টিফিকেট প্রদান",
+        eyebrowEn: "100% Online & Certified",
+        title1Bn: "প্র্যাক্টিক্যাল শিখুন,",
+        title1En: "Learn practical,",
+        title2Bn: "গড়ুন ক্যারিয়ার।",
+        title2En: "build your career.",
+        title3Bn: "লাইফটাইম অ্যাক্সেস ও সাপোর্ট।",
+        title3En: "Lifetime Access & Support.",
+        subtitleBn: "অভিজ্ঞ মেন্টরদের সার্বক্ষণিক গাইডেন্সে লাইভ ও রেকর্ড ড্যাশবোর্ডে কোর্স করুন। কোর্স সম্পন্ন করে ভেরিফাইড সার্টিফিকেট নিন।",
+        subtitleEn: "Learn directly from expert trainers with lifetime dashboard access, active support, and verifiable digital certificates.",
+        ctaBn: "আমাদের কোর্সসমূহ",
+        ctaEn: "Explore All Courses",
+        ctaHref: "#courses"
+      }
+    ],
+    [getPageContent]
+  );
+
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  useEffect(() => {
+    const slideTimer = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % heroSlides.length);
+    }, 12000); // 12s per banner slide (slower!)
+    return () => clearInterval(slideTimer);
+  }, [heroSlides.length]);
+
+  const nextHeroSlide = () => setCurrentSlideIndex((prev) => (prev + 1) % heroSlides.length);
+  const prevHeroSlide = () => setCurrentSlideIndex((prev) => (prev === 0 ? heroSlides.length - 1 : prev - 1));
+  const activeSlide = heroSlides[currentSlideIndex];
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
@@ -355,7 +426,7 @@ const CoursesPage = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setTitleNumber((n) => (n === rotatingTitles.length - 1 ? 0 : n + 1));
-    }, 2000);
+    }, 5000); // 5s per rotating text (slower!)
     return () => clearTimeout(timeoutId);
   }, [titleNumber, rotatingTitles]);
 
@@ -402,8 +473,8 @@ const CoursesPage = () => {
         viewport={{ once: true }} transition={{ delay: index * 0.04 }} className="group h-full">
         <div className={`relative flex flex-col h-full rounded-[28px] overflow-hidden bg-card border border-border/40 hover:border-primary/40 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-primary/[0.12] p-2.5 ${metadata.isUpcoming ? 'ring-1 ring-amber-500/20' : ''}`}>
           {landingHref ? (
-            <Link to={landingHref} className="block">
-              {thumbnailUrl ? (
+            thumbnailUrl ? (
+              <Link to={landingHref} className="block">
                 <div className="relative h-44 overflow-hidden rounded-[20px]">
                   <img src={thumbnailUrl} alt={isBn ? course.titleBn : course.titleEn}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
@@ -421,7 +492,9 @@ const CoursesPage = () => {
                     )}
                   </div>
                 </div>
-              ) : (
+              </Link>
+            ) : (
+              <Link to={landingHref} className="block">
                 <div className={`relative h-44 bg-gradient-to-br ${metadata.color} overflow-hidden rounded-[20px]`}>
                   <div className="absolute top-1/2 left-5 -translate-y-1/2">
                     <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
@@ -429,8 +502,8 @@ const CoursesPage = () => {
                     </div>
                   </div>
                 </div>
-              )}
-            </Link>
+              </Link>
+            )
           ) : (
             thumbnailUrl ? (
               <div className="relative h-44 overflow-hidden rounded-[20px]">
@@ -491,43 +564,41 @@ const CoursesPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout flushTop={true}>
 
 
       <Helmet>
-        <title>Astropixel Academy — Learn Graphic Design, Web Development, Vibe Coding, AI & Digital Marketing in Bangla</title>
-        <meta name="description" content="Astropixel Academy (Learn with Astropixel) — Bangla online courses on graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma, Fiverr freelancing & digital products. Learn from experts & get certified." />
-        <meta name="keywords" content="Astropixel Academy, Learn with Astropixel, graphic design course Bangla, web development Bangla, vibe coding, digital marketing Bangla, AI automation, prompt engineering, motion graphics, Figma course, Fiverr freelancing, digital product course, online course Bangladesh" />
-        <meta name="author" content="Astropixel Academy" />
+        <title>Learn with AlphaZero — Graphic Design, Web Development, AI & Digital Marketing</title>
+        <meta name="description" content="Learn with AlphaZero — Bangla & English online courses on graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma & freelancing." />
+        <meta name="keywords" content="Learn with AlphaZero, AlphaZero Learn, graphic design course Bangla, web development Bangla, vibe coding, digital marketing Bangla, AI automation, prompt engineering, online course Bangladesh" />
+        <meta name="author" content="Learn with AlphaZero" />
         <meta name="robots" content="index, follow, max-image-preview:large" />
-        <link rel="canonical" href="https://learn.astropixel.tech/" />
 
-        <meta property="og:site_name" content="Astropixel Academy" />
-        <meta property="og:title" content="Astropixel Academy — Learn Design, Web Dev, Vibe Coding, AI & Digital Marketing" />
-        <meta property="og:description" content="Bangla online courses on graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma & Fiverr freelancing." />
-        <meta property="og:url" content="https://learn.astropixel.tech/" />
+        <meta property="og:site_name" content="Learn with AlphaZero" />
+        <meta property="og:title" content="Learn with AlphaZero — Design, Web Dev, AI & Digital Marketing" />
+        <meta property="og:description" content="Bangla online courses on graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma & freelancing." />
         <meta property="og:type" content="website" />
         <meta property="og:locale" content="bn_BD" />
         <meta property="og:locale:alternate" content="en_US" />
         <meta property="og:image" content={learnOgImage.url} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="Astropixel Academy — Learn with Astropixel" />
+        <meta property="og:image:alt" content="Learn with AlphaZero" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Astropixel Academy — Design, Web Dev, Vibe Coding, AI & Digital Marketing" />
-        <meta name="twitter:description" content="Bangla courses on graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma & Fiverr freelancing." />
+        <meta name="twitter:title" content="Learn with AlphaZero — Design, Web Dev, AI & Digital Marketing" />
+        <meta name="twitter:description" content="Bangla courses on graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma & freelancing." />
         <meta name="twitter:image" content={learnOgImage.url} />
-        <meta name="twitter:image:alt" content="Astropixel Academy — Learn with Astropixel" />
+        <meta name="twitter:image:alt" content="Learn with AlphaZero" />
 
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "EducationalOrganization",
-          "name": "Astropixel Academy",
-          "alternateName": ["Learn with Astropixel", "Astropixel Learn"],
+          "name": "Learn with AlphaZero",
+          "alternateName": ["Learn with AlphaZero", "AlphaZero LMS"],
+          "description": "Learn with AlphaZero — Online learning platform teaching graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma & freelancing.",
           "url": "https://learn.astropixel.tech/",
           "logo": "https://astropixel.tech/logo.png",
-          "description": "Astropixel Academy — Bangla online learning platform teaching graphic design, web development, vibe coding, digital marketing, AI automation, prompt engineering, motion graphics, Figma, Fiverr freelancing and digital products.",
           "sameAs": [
             "https://astropixel.tech",
             "https://www.facebook.com/share/1Zm7yMhPtk/",
@@ -575,145 +646,48 @@ const CoursesPage = () => {
         })}</script>
       </Helmet>
       {/* Hero - logo-forward editorial */}
+      {/* Hero Carousel - Pure Full-Bleed Page Image Slider Banner */}
       {!isAllCoursesRoute && (
-      <section id="home" ref={heroRef} className="relative flex items-center justify-center overflow-hidden pt-28 pb-10 lg:pt-52 lg:pb-12 -mt-20">
+      <section id="home" ref={heroRef} className="relative flex items-center justify-center overflow-hidden mt-[64px] h-[450px] sm:h-[550px] lg:h-[650px] w-full">
+        {/* Full-width Animated Carousel Background Image */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSlide.id}
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.99 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${activeSlide.image})` }}
+          />
+        </AnimatePresence>
 
-
-        {/* Blue wave background image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${coursesHeroBg})`,
-            filter: "blur(6.4px)",
-            transform: "scale(1.05)",
-            maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
-          }}
-        />
-        {/* Dark overlay for text readability + bottom fade to background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/10 to-background" />
-        {/* Soft radial spotlight */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, hsl(var(--primary) / 0.15), transparent 70%)" }} />
-
-        <motion.div style={{ opacity: heroOpacity, scale: heroScale }} className="w-full container mx-auto px-5 sm:px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-24 items-center">
-          <div className="flex flex-col items-start text-left relative pl-0 lg:justify-self-start">
-
-
-
-
-
-            {/* Eyebrow */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/5 backdrop-blur-sm"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm md:text-base font-medium tracking-wide text-foreground/80">
-                {cms("hero.eyebrow.bn", "hero.eyebrow.en", "ডিজিটাল স্কিল একাডেমি", "Digital Skill Academy")}
-              </span>
-            </motion.div>
-
-            {/* Editorial headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="font-playfair text-[2rem] leading-[1.15] sm:text-4xl md:text-5xl lg:text-6xl tracking-tight mb-6 md:mb-8 max-w-4xl"
-            >
-              <span className="lg:whitespace-nowrap">
-                <span className="text-foreground font-normal">
-                  {cms("hero.title1.bn", "hero.title1.en", "এক প্ল্যাটফর্ম।", "One platform.")}
-                </span>{" "}
-                <span className="text-foreground/70 font-normal">
-                  {cms("hero.title2.bn", "hero.title2.en", "প্রতিটি ডিজিটাল স্কিল।", "every digital skill.")}
-                </span>
-              </span>
-
-              <br />
-              <span className="font-semibold bg-gradient-to-r from-[hsl(var(--gradient-start))] via-[hsl(var(--gradient-mid))] to-[hsl(var(--gradient-end))] bg-clip-text text-transparent">
-                {cms("hero.title3.bn", "hero.title3.en", "অসীম সম্ভাবনা।", "Endless opportunities.")}
-              </span>
-
-
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-              className="text-base md:text-lg text-foreground/65 max-w-xl mb-10 leading-[1.7]"
-            >
-              {cms(
-                "hero.subtitle.bn",
-                "hero.subtitle.en",
-                "AI ও গ্রাফিক ডিজাইন থেকে প্রোগ্রামিং, ওয়েব ডেভেলপমেন্ট, ডিজিটাল মার্কেটিং, ভিডিও এডিটিং, ফটোগ্রাফি এবং ফ্রিল্যান্সিং—সফল ডিজিটাল ক্যারিয়ার গড়তে যা প্রয়োজন সব শিখুন।",
-                "From AI and graphic design to programming, web development, digital marketing, video editing, photography and freelancing — everything you need to build a thriving digital career."
-              )}
-            </motion.p>
-
-
-
-
-
-
-            {/* CTA Button */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 }}
-              className="flex items-center justify-start mb-7"
-            >
-              <span className="relative inline-block overflow-hidden rounded-full p-[1.5px]">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,hsl(var(--primary)/0.2)_0%,hsl(var(--primary))_50%,hsl(var(--primary)/0.2)_100%)]" />
-                <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-background/90 backdrop-blur-3xl text-sm font-medium text-foreground">
-                  <a
-                    href="#courses"
-                    className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-foreground border-input border-[1px] hover:bg-gradient-to-tr hover:from-primary/30 hover:via-primary/20 hover:to-transparent transition-all py-4 px-10"
-                  >
-                    {cms("hero.cta.bn", "hero.cta.en", "কোর্স দেখুন", "Browse Courses")}
-                  </a>
-                </div>
-              </span>
-            </motion.div>
-
-
-
-
-          </div>
-
-            {/* Hero illustration - right side */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.7 }}
-              className="hidden lg:flex justify-end items-center lg:justify-self-end -mt-16"
-            >
-              <img
-                src={heroIllustration.url}
-                alt="Learning illustration"
-                className="w-full max-w-sm h-auto object-contain drop-shadow-xl"
-              />
-            </motion.div>
-          </div>
-        </motion.div>
+        {/* Bottom Dots Pagination Indicators */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 z-20">
+          {heroSlides.map((slide, idx) => (
+            <button
+              key={slide.id}
+              onClick={() => setCurrentSlideIndex(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+              className={`transition-all duration-300 rounded-full ${
+                currentSlideIndex === idx
+                  ? "w-8 h-2.5 bg-gradient-to-r from-[hsl(var(--gradient-start))] to-[hsl(var(--gradient-end))]"
+                  : "w-2.5 h-2.5 bg-foreground/40 hover:bg-foreground/80 backdrop-blur-sm"
+              }`}
+            />
+          ))}
+        </div>
       </section>
       )}
 
       {/* Courses Grid */}
-      <section className="pt-8 pb-20 border-t border-border/40" id="courses">
-
-
+      <section className="pt-4 pb-14 border-t border-border/40" id="courses">
         <div className="container mx-auto px-6">
           {!isAllCoursesRoute && (<>
           {/* Centered header — Popular Courses */}
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="max-w-3xl mx-auto text-center mb-10">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight mb-5">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="max-w-3xl mx-auto text-center mb-5">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight mb-2">
               {(() => {
                 const text = cms("grid.title.bn", "grid.title.en", "জনপ্রিয় কোর্স", t.popularCourses);
                 const idx = text.toLowerCase().indexOf(isBn ? "কোর্স" : "course");
@@ -724,15 +698,24 @@ const CoursesPage = () => {
                     <span className="bg-gradient-to-r from-[hsl(var(--gradient-start))] via-[hsl(var(--gradient-mid))] to-[hsl(var(--gradient-end))] bg-clip-text text-transparent">
                       {text.slice(idx)}
                     </span>
-
                   </>
                 );
               })()}
             </h2>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto mb-3">
+              {isBn ? "পছন্দের স্কিল বেছে নিন এবং আজই প্র্যাক্টিক্যাল প্রজেক্টে যুক্ত হন" : "Pick your desired skill and jump into practical projects today"}
+            </p>
+            <Link
+              to="/courses"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary text-primary-foreground font-semibold text-xs shadow-md hover:opacity-90 transition-opacity"
+            >
+              <span>{isBn ? "সকল কোর্সসমূহ দেখুন" : "View All Courses Catalog"}</span>
+              <ArrowRight size={14} />
+            </Link>
           </motion.div>
 
           {/* Category pills */}
-          <div className="max-w-5xl mx-auto mb-12">
+          <div className="max-w-5xl mx-auto mb-6">
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
               {categories.map((cat) => {
                 const isActive = activeCategory === cat.id;
@@ -766,11 +749,11 @@ const CoursesPage = () => {
               className="max-w-7xl mx-auto mb-10 text-center">
               <h1 className="text-3xl md:text-5xl font-display font-bold mb-3">
                 <span className="bg-gradient-to-r from-[hsl(var(--gradient-start))] via-[hsl(var(--gradient-mid))] to-[hsl(var(--gradient-end))] bg-clip-text text-transparent">
-                  {isBn ? "সব কোর্স" : "All Courses"}
+                  {isBn ? "ওয়েব ও প্র্যাক্টিক্যাল কোর্সসমূহ" : "Web & Practical Courses"}
                 </span>
               </h1>
               <p className="text-muted-foreground text-sm md:text-base">
-                {isBn ? "ক্যাটাগরি অনুযায়ী সাজানো — পছন্দের কোর্স বেছে নিন" : "Browse by category and pick what fits you"}
+                {isBn ? "ওয়েব ডেভেলপমেন্ট, ভাইব কোডিং, এআই ও ডিজিটাল ক্যারিয়ার কোর্সসমূহ" : "Web Development, Vibe Coding, AI & Digital Career Courses"}
               </p>
             </motion.div>
           )}
@@ -834,8 +817,7 @@ const CoursesPage = () => {
                   </div>
                 ));
               })()}
-            </div>
-          )}
+            </div>)}
         </div>
       </section>
 
@@ -877,20 +859,20 @@ const CoursesPage = () => {
               {cms("instructors.desc.bn", "instructors.desc.en", "ইন্ডাস্ট্রি এক্সপার্টদের কাছ থেকে সরাসরি শিখুন।", "Learn directly from industry experts.")}
             </p>
           </motion.div>
-          <div className="max-w-7xl mx-auto relative overflow-hidden trainers-swiper">
+          <div className="max-w-7xl mx-auto relative overflow-hidden trainers-swiper py-3">
             <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background to-transparent z-10" />
             <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background to-transparent z-10" />
             <AppSwiper
               variant="marquee"
-              speed={6000}
+              speed={14000}
               autoplayDelay={0}
               loop
               items={Object.values(trainers)}
               keyExtractor={(tr) => tr.name}
               slideClassName="!w-[200px] sm:!w-[220px]"
               renderItem={(tr) => (
-                <div className="group shrink-0">
-                  <div className="glass-card rounded-2xl p-3 text-center shadow-none hover:shadow-none hover:border-primary/40 transition-all hover:-translate-y-1">
+                <div className="group shrink-0 py-1">
+                  <div className="glass-card rounded-2xl p-3 text-center shadow-none hover:shadow-none hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
                     <div className="relative aspect-square w-full mb-3 overflow-hidden rounded-xl">
                       <img src={tr.image} alt={tr.name} loading="lazy"
                         className="relative w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-500"
@@ -985,12 +967,13 @@ const CoursesPage = () => {
             ];
             const loop = [...feedbacks, ...feedbacks];
             return (
-              <div className="relative max-w-6xl mx-auto px-4 sm:px-12 reviews-swiper">
+              <div className="relative max-w-6xl mx-auto px-4 md:px-16 reviews-swiper">
                 <AppSwiper
                   items={feedbacks}
                   keyExtractor={(_, i) => i}
                   variant="cards"
-                  showNavigation
+                  showNavigation={false}
+                  showPagination={true}
                   loop
                   autoplayDelay={4000}
                   speed={700}

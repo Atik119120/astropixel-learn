@@ -22,17 +22,15 @@ const CoursesNavbar = () => {
   const isBn = language === "bn";
 
   const isLearnSubdomain = typeof window !== "undefined" && window.location.hostname.startsWith("learn.");
-  const coursesHomeHref = isLearnSubdomain ? "/" : "/courses";
-  const contactHref = "/learn-contact";
-  const aboutHref = "/learn-about";
-  const agencyHref = isLearnSubdomain ? "https://astropixel.tech" : "/";
+  const coursesHomeHref = "/";
+  const contactHref = "/contact";
+  const aboutHref = "/about";
 
   const navLinks: Array<{ name: string; to?: string; href?: string; id?: string; icon: any; internal?: boolean; external?: boolean }> = [
-    { name: isBn ? "হোম" : "Home", to: coursesHomeHref, id: "home", icon: Home, internal: true },
-    { name: isBn ? "সম্পর্কে" : "About Us", to: aboutHref, icon: Info, internal: true },
-    { name: isBn ? "কোর্স" : "Courses", to: "/courses/all", id: "courses", icon: LayoutGrid, internal: true },
-    { name: isBn ? "যোগাযোগ" : "Contact", to: contactHref, id: "contact", icon: Phone, internal: true },
-    
+    { name: isBn ? "হোম" : "Home", to: "/", id: "home", icon: Home, internal: true },
+    { name: isBn ? "কোর্সসমূহ" : "Courses", to: "/courses", id: "courses", icon: LayoutGrid, internal: true },
+    { name: isBn ? "আমাদের সম্পর্কে" : "About Us", to: "/about", icon: Info, internal: true },
+    { name: isBn ? "যোগাযোগ" : "Contact Us", to: "/contact", id: "contact", icon: Phone, internal: true },
   ];
 
 
@@ -63,49 +61,28 @@ const CoursesNavbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
 
-  const handleNavClick = (id: string) => {
+  const handleNavClick = (to: string) => {
     setIsMobileMenuOpen(false);
-    // If not on courses/learn page, navigate there first
-    const onCoursesPage = location.pathname === "/courses" || location.pathname.startsWith("/courses/");
-    if (!onCoursesPage) {
-      navigate(coursesHomeHref);
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        el?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 250);
-      return;
-    }
-    if (id === "home") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    const el = document.getElementById(id);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    navigate(to);
   };
-
-
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-2" : "py-3"}`}>
-        <div className="container mx-auto px-4 sm:px-6">
+      <nav className="fixed top-0 left-0 right-0 z-50 w-full h-[64px] flex items-center bg-background border-b border-border/40 shadow-sm transition-all duration-300">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ y: -20, opacity: 0 }}
+            initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
-            className={`flex items-center justify-between rounded-2xl px-4 sm:px-5 py-2.5 transition-all duration-500 ${
-              isScrolled
-                ? "bg-background/60 dark:bg-card/50 backdrop-blur-xl border border-primary/15"
-                : "bg-background/30 dark:bg-card/20 backdrop-blur-md border border-primary/10"
-            }`}
+            transition={{ duration: 0.4 }}
+            className="flex items-center justify-between"
           >
             {/* Learn Logo */}
-            <button
-              onClick={() => handleNavClick("home")}
+            <Link
+              to="/"
               className="flex items-center gap-2 group shrink-0"
             >
               <div
-                aria-label="Learn with Astropixel"
+                aria-label="Learn with AlphaZero"
                 className="h-8 sm:h-9 w-32 sm:w-36 transition-all"
                 style={{
                   backgroundImage: `linear-gradient(90deg, hsl(var(--gradient-start)), hsl(var(--gradient-mid)), hsl(var(--gradient-end)))`,
@@ -119,8 +96,7 @@ const CoursesNavbar = () => {
                   maskSize: 'contain',
                 }}
               />
-
-            </button>
+            </Link>
 
             {/* Desktop nav */}
             <div className="hidden lg:flex items-center gap-1 bg-primary/[0.06] rounded-full px-1.5 py-1 border border-primary/15">
@@ -172,11 +148,11 @@ const CoursesNavbar = () => {
               </button>
 
               <Link
-                to="/student/login"
+                to="/login"
                 className="ml-1 group px-5 py-2 bg-gradient-to-r from-[hsl(var(--gradient-start))] via-[hsl(var(--gradient-mid))] to-[hsl(var(--gradient-end))] text-primary-foreground rounded-full font-semibold text-sm flex items-center gap-1.5 hover:opacity-90 transition-opacity"
               >
                 <User size={14} />
-                <span>{isBn ? "স্টুডেন্ট লগইন" : "Student Login"}</span>
+                <span>{isBn ? "লগইন" : "Login"}</span>
                 <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
             </div>

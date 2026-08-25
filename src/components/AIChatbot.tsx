@@ -4,6 +4,7 @@ import { X, Send, Loader2, Sparkles, MessageCircle, Image, Video, Paperclip, Pla
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/env";
 import logoAssetJson from "@/assets/logo.png.asset.json";
 const logo = logoAssetJson.url;
 
@@ -239,11 +240,11 @@ const AIChatbot = () => {
     let assistantContent = "";
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ 
           messages: [...messages, userMsg] 

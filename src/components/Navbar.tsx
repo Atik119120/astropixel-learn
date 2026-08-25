@@ -32,17 +32,13 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-2" : "py-3"}`}>
-        <div className="container mx-auto px-4 sm:px-6">
+      <nav className="fixed top-0 left-0 right-0 z-50 w-full h-[64px] flex items-center bg-background border-b border-border/40 shadow-sm transition-all duration-300">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ y: -20, opacity: 0 }}
+            initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
-            className={`flex items-center justify-between rounded-2xl px-4 sm:px-5 py-2.5 transition-all duration-500 ${
-              isScrolled
-                ? "bg-white/80 backdrop-blur-xl border border-neutral-200/80 shadow-md"
-                : "bg-white/40 backdrop-blur-md border border-black/5"
-            }`}
+            transition={{ duration: 0.4 }}
+            className="flex items-center justify-between"
           >
             {/* Brand Logo */}
             <Link to="/" className="flex items-center gap-3 group">
@@ -86,15 +82,6 @@ const Navbar = () => {
                 <Search size={18} />
               </button>
 
-              {/* Language Switcher */}
-              <button
-                onClick={() => setLanguage(language === "en" ? "bn" : "en")}
-                className="hidden sm:flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-colors"
-              >
-                <Globe size={13} />
-                <span>{language === "en" ? "বাংলা" : "ENG"}</span>
-              </button>
-
               {/* Student Portal Button */}
               <Link
                 to="/student/login"
@@ -103,17 +90,6 @@ const Navbar = () => {
                 <User size={14} />
                 <span className="hidden sm:inline">Student Portal</span>
               </Link>
-
-              {/* External Agency Link */}
-              <a
-                href="https://astropixel.tech"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden lg:flex items-center gap-1 text-[11px] font-medium text-neutral-500 hover:text-black transition-colors"
-              >
-                <span>Agency</span>
-                <ArrowUpRight size={12} />
-              </a>
 
               {/* Mobile Menu Toggle */}
               <button
@@ -151,27 +127,6 @@ const Navbar = () => {
                   </Link>
                 );
               })}
-              <div className="pt-2 mt-2 border-t border-neutral-100 flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    setLanguage(language === "en" ? "bn" : "en");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700"
-                >
-                  <Globe size={14} />
-                  <span>Language: {language === "en" ? "বাংলা" : "English"}</span>
-                </button>
-                <a
-                  href="https://astropixel.tech"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs font-semibold text-purple-700"
-                >
-                  <span>Agency Site</span>
-                  <ArrowUpRight size={14} />
-                </a>
-              </div>
             </div>
           </motion.div>
         )}

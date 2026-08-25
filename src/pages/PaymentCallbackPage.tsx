@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -9,7 +9,8 @@ import Layout from '@/components/Layout';
 type PaymentStatus = 'verifying' | 'success' | 'failed';
 
 const PaymentCallbackPage = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
   const navigate = useNavigate();
   const [status, setStatus] = useState<PaymentStatus>('verifying');
   const [message, setMessage] = useState('পেমেন্ট ভেরিফাই করা হচ্ছে...');

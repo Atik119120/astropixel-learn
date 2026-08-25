@@ -14,8 +14,7 @@ import {
   PlayCircle, Sparkles, BookOpen, ArrowRight, AlertCircle, Target,
 } from 'lucide-react';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY as SUPABASE_ANON } from "@/lib/env";
 
 // Extract YouTube video ID from various YouTube URL formats
 function getYouTubeId(url?: string | null): string | null {

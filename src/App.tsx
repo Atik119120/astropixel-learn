@@ -14,6 +14,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 
 // Primary Learn Pages
 import CoursesPage from "./pages/CoursesPage";
+import AllCoursesCatalogPage from "./pages/AllCoursesCatalogPage";
 import LearnAboutPage from "./pages/LearnAboutPage";
 import LearnContactPage from "./pages/LearnContactPage";
 import NotFound from "./pages/NotFound";
@@ -57,64 +58,32 @@ function AppContent() {
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
           <Suspense fallback={<div className="min-h-screen bg-background" />}>
-            <Routes location={location} key={location.pathname}>
-              {/* Public Learn Pages */}
+            <Routes key={location.pathname}>
+              {/* Core Public Pages */}
               <Route path="/" element={<CoursesPage />} />
-              <Route path="/courses" element={<CoursesPage />} />
-              <Route path="/courses/all" element={<CoursesPage />} />
-              <Route path="/instructors" element={<CoursesPage />} />
-              <Route path="/courses/:slug" element={<CourseLandingPage />} />
-              <Route path="/vibe-coding" element={<CourseLandingPage />} />
+              <Route path="/courses" element={<AllCoursesCatalogPage />} />
+              <Route path="/courses/all" element={<AllCoursesCatalogPage />} />
               <Route path="/about" element={<LearnAboutPage />} />
               <Route path="/contact" element={<LearnContactPage />} />
 
-              {/* Student System */}
-              <Route path="/student/login" element={<StudentLoginPage />} />
-              <Route path="/student/register" element={<StudentLoginPage />} />
+              {/* Unified Login Portal */}
+              <Route path="/login" element={<StudentLoginPage />} />
               <Route path="/auth" element={<StudentLoginPage />} />
+              <Route path="/student/login" element={<StudentLoginPage />} />
+              <Route path="/teacher/login" element={<StudentLoginPage />} />
+              <Route path="/admin/login" element={<StudentLoginPage />} />
+
+              {/* Core Dashboards */}
               <Route path="/student" element={<StudentDashboard />} />
-              <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/student/courses" element={<StudentDashboard />} />
-              <Route path="/student/certificates" element={<MyCertificatesPage />} />
-              <Route path="/student/course/:courseId" element={<CourseViewerPage />} />
+              <Route path="/student/*" element={<StudentDashboard />} />
 
-              {/* Teacher System */}
-              <Route path="/teacher/login" element={<TeacherLoginPage />} />
               <Route path="/teacher" element={<TeacherDashboard />} />
-              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-              <Route path="/teacher/courses" element={<TeacherDashboard />} />
-              <Route path="/teacher/courses/create" element={<TeacherDashboard />} />
-              <Route path="/teacher/courses/:id/edit" element={<TeacherDashboard />} />
+              <Route path="/teacher/*" element={<TeacherDashboard />} />
 
-              {/* Education Admin System */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/courses" element={<AdminDashboard />} />
-              <Route path="/admin/students" element={<AdminDashboard />} />
-              <Route path="/admin/teachers" element={<AdminDashboard />} />
-              <Route path="/admin/enrollments" element={<AdminDashboard />} />
-              <Route path="/admin/payments" element={<AdminDashboard />} />
-              <Route path="/admin/certificates" element={<AdminDashboard />} />
-              <Route path="/admin/settings" element={<AdminDashboard />} />
               <Route path="/admin/*" element={<AdminDashboard />} />
 
-              {/* Generic Role Dashboard Router */}
-              <Route path="/dashboard" element={<DashboardPage />} />
-
-              {/* Certificates System */}
-              <Route path="/my-certificates" element={<MyCertificatesPage />} />
-              <Route path="/certificate/:certificateId" element={<CertificatePage />} />
-              <Route path="/verify-certificate" element={<VerifyCertificatePage />} />
-
-              {/* Auth Recovery & Payment Callbacks */}
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/payment/callback" element={<PaymentCallbackPage />} />
-              <Route path="/payment/cancel" element={<PaymentCancelPage />} />
-              <Route path="/pay/:invoiceId" element={<CustomCheckoutPage />} />
-
-              {/* 404 Catch All */}
+              {/* 404 Fallback */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

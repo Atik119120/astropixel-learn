@@ -11,50 +11,49 @@ const Footer = () => {
           {/* Brand Info */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <img src={learnLogo} alt="AstroPixel Education Logo" className="h-9 w-auto" />
+              <img src={learnLogo} alt="Learn with AlphaZero Logo" className="h-9 w-auto brightness-0 invert" />
             </Link>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              Empowering developers and designers with industry-ready coding, UI/UX design, and AI workflows from zero to impact.
+              Learn with AlphaZero — Empowering developers, designers, and creators with industry-ready coding, AI workflows, and digital skills.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4">Learn Navigation</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/90 mb-4">Navigation</h4>
             <ul className="space-y-2.5 text-sm text-neutral-300">
               <li><Link to="/" className="hover:text-white transition-colors">Home</Link></li>
               <li><Link to="/courses" className="hover:text-white transition-colors">All Courses</Link></li>
-              <li><Link to="/about" className="hover:text-white transition-colors">About Platform</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors">Student Helpdesk</Link></li>
-              <li><Link to="/student/login" className="hover:text-white transition-colors">Student Login</Link></li>
+              <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+              <li><Link to="/login" className="hover:text-white transition-colors">Login</Link></li>
             </ul>
           </div>
 
-          {/* Student Portals & Portals */}
+          {/* Dashboards */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4">Portals & Verify</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/90 mb-4">Dashboards</h4>
             <ul className="space-y-2.5 text-sm text-neutral-300">
-              <li><Link to="/student/dashboard" className="hover:text-white transition-colors">Student Dashboard</Link></li>
-              <li><Link to="/teacher/login" className="hover:text-white transition-colors">Instructor Login</Link></li>
-              <li><Link to="/admin/login" className="hover:text-white transition-colors">Education Admin</Link></li>
-              <li><Link to="/verify-certificate" className="hover:text-white transition-colors">Verify Certificate</Link></li>
-              <li><Link to="/my-certificates" className="hover:text-white transition-colors">My Certificates</Link></li>
+              <li><Link to="/student" className="hover:text-white transition-colors">Student Dashboard</Link></li>
+              <li><Link to="/teacher" className="hover:text-white transition-colors">Teacher Dashboard</Link></li>
+              <li><Link to="/admin" className="hover:text-white transition-colors">Admin Dashboard</Link></li>
+              <li><Link to="/login" className="hover:text-white transition-colors">Login Portal</Link></li>
             </ul>
           </div>
 
           {/* Contact & Socials */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4">Get Support</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/90 mb-4">Get Support</h4>
             <p className="text-sm text-neutral-300 flex items-center gap-2">
-              <Mail size={15} className="text-cyan-400" />
+              <Mail size={15} className="text-white/80" />
               <span>hello@astropixel.tech</span>
             </p>
             <p className="text-sm text-neutral-300 flex items-center gap-2">
-              <Phone size={15} className="text-cyan-400" />
+              <Phone size={15} className="text-white/80" />
               <span>+880 1344-497808</span>
             </p>
             <p className="text-sm text-neutral-300 flex items-center gap-2">
-              <MapPin size={15} className="text-cyan-400" />
+              <MapPin size={15} className="text-white/80" />
               <span>Hi-Tech Park, Rajshahi, BD</span>
             </p>
 

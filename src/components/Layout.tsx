@@ -19,11 +19,11 @@ const Layout = ({ children, flushTop = false }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {isLearnContext ? <CoursesNavbar /> : <Navbar />}
-      <main className={flushTop ? "flex-1" : "flex-1 pt-20"}>
+      <CoursesNavbar />
+      <main className={flushTop ? "flex-1" : "flex-1 pt-16"}>
         {children}
       </main>
-      {isLearnContext ? <CoursesFooter /> : <Footer />}
+      <CoursesFooter />
     </div>
   );
 };

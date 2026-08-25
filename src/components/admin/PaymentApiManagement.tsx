@@ -39,7 +39,7 @@ interface Payment {
   paid_at: string | null;
 }
 
-const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || 'ayqbpqgahtycrncbknvj';
+import { SUPABASE_PROJECT_ID as PROJECT_REF } from "@/lib/env";
 const FN_BASE = `https://${PROJECT_REF}.functions.supabase.co`;
 
 function genKey() {

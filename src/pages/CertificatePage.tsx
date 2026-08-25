@@ -155,19 +155,7 @@ export default function CertificatePage() {
             <ArrowLeft className="w-4 h-4" />
             {t('cert.back')}
           </Link>
-          <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-            
-            {/* Language toggle removed — English only */}
 
-          </div>
         </div>
       </header>
 

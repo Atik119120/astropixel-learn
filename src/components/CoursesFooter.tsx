@@ -1,4 +1,5 @@
 import { ArrowUp, Facebook, Instagram, MessageCircle, Mail, Phone, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
 import learnLogoAssetJson from "@/assets/learn-with-alphazero-logo.png.asset.json";
 const learnLogo = learnLogoAssetJson.url;
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,17 +9,12 @@ const CoursesFooter = () => {
   const isBn = language === "bn";
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const navLinks = [
-    { name: isBn ? "হোম" : "Home", id: "home" },
-    { name: isBn ? "আমাদের সম্পর্কে" : "About Us", id: "about" },
-    { name: isBn ? "ইনস্ট্রাক্টর" : "Instructors", id: "instructors" },
-    { name: isBn ? "কোর্সসমূহ" : "Courses", id: "courses" },
-    { name: isBn ? "যোগাযোগ" : "Contact", id: "contact" },
+    { name: isBn ? "হোম" : "Home", to: "/" },
+    { name: isBn ? "কোর্সসমূহ" : "Courses", to: "/courses" },
+    { name: isBn ? "আমাদের সম্পর্কে" : "About Us", to: "/about" },
+    { name: isBn ? "যোগাযোগ" : "Contact", to: "/contact" },
   ];
 
   const socials = [
@@ -30,38 +26,44 @@ const CoursesFooter = () => {
   ];
 
   return (
-    <footer className="relative border-t border-border/40 bg-muted/30">
-      <div className="container mx-auto px-5 sm:px-6 py-10 sm:py-14">
-        <div className="max-w-6xl mx-auto grid gap-8 sm:gap-12 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="relative overflow-hidden border-t border-purple-500/30 bg-gradient-to-br from-[#1B0A33] via-[#2D0F55] to-[#120524] text-white pt-14 pb-8 shadow-2xl">
+      {/* Background Ambient Glow Orbs */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-purple-500/20 blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-indigo-500/20 blur-[130px] pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
+
+      <div className="container mx-auto px-5 sm:px-6 relative z-10">
+        <div className="max-w-6xl mx-auto grid gap-8 sm:gap-12 sm:grid-cols-2 lg:grid-cols-4 pb-12">
           {/* Brand */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-4">
             <img
               src={learnLogo}
-              alt="Learn with Astropixel"
-              className="h-10 w-auto brightness-0 dark:brightness-0 dark:invert mb-4"
+              alt="Learn with AlphaZero"
+              className="h-10 w-auto brightness-0 invert mb-2"
             />
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-purple-200/80 leading-relaxed">
               {isBn
-                ? "১০০% অনলাইন-ভিত্তিক প্র্যাক্টিক্যাল ও AI-পাওয়ার্ড কোর্স। ঘরে বসেই ডিজিটাল ক্যারিয়ার শুরু করুন।"
-                : "100% online, practical & AI-powered courses. Start your digital career right from home."}
+                ? "১০০% অনলাইন-ভিত্তিক প্র্যাক্টিক্যাল ও AI-পাওয়ার্ড কোর্স। Learn with AlphaZero-র সাথে নিজের সেরা স্কিল গড়ুন।"
+                : "100% online, practical & AI-powered courses. Build your digital skills with Learn with AlphaZero."}
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="text-[10px] sm:text-xs font-medium tracking-wider uppercase text-muted-foreground mb-4">
+            <h4 className="text-xs font-bold tracking-wider uppercase text-purple-300 mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
               {isBn ? "ন্যাভিগেশন" : "Navigation"}
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {navLinks.map((l) => (
-                <li key={l.id}>
-                  <button
-                    onClick={() => scrollTo(l.id)}
-                    className="group flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors"
+                <li key={l.to}>
+                  <Link
+                    to={l.to}
+                    className="group flex items-center gap-2 text-sm text-purple-100/80 hover:text-white transition-colors"
                   >
-                    <span className="w-3 h-px bg-border group-hover:bg-primary group-hover:w-5 transition-all" />
+                    <span className="w-2 h-2 rounded-full bg-purple-400/40 group-hover:bg-purple-300 group-hover:scale-125 transition-all" />
                     {l.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -69,20 +71,23 @@ const CoursesFooter = () => {
 
           {/* Social */}
           <div>
-            <h4 className="text-[10px] sm:text-xs font-medium tracking-wider uppercase text-muted-foreground mb-4">
-              {isBn ? "সোশ্যাল" : "Social"}
+            <h4 className="text-xs font-bold tracking-wider uppercase text-purple-300 mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              {isBn ? "সোশ্যাল মিডিয়া" : "Social Media"}
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {socials.map((s) => (
                 <li key={s.label}>
                   <a
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors"
+                    className="group flex items-center gap-2.5 text-sm text-purple-100/80 hover:text-white transition-colors"
                   >
-                    <s.icon size={15} className="group-hover:scale-110 transition-transform" />
-                    {s.label}
+                    <div className="p-1.5 rounded-lg bg-white/10 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                      <s.icon size={14} />
+                    </div>
+                    <span>{s.label}</span>
                   </a>
                 </li>
               ))}
@@ -91,23 +96,22 @@ const CoursesFooter = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="text-[10px] sm:text-xs font-medium tracking-wider uppercase text-muted-foreground mb-4">
-              {isBn ? "যোগাযোগ" : "Contact"}
+            <h4 className="text-xs font-bold tracking-wider uppercase text-purple-300 mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              {isBn ? "যোগাযোগ" : "Contact Support"}
             </h4>
-            <div className="space-y-2 text-sm">
-              <a href="tel:+8801776965533" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-                <Phone size={14} /> +880 1776-965533
+            <div className="space-y-3 text-sm">
+              <a href="tel:+8801776965533" className="flex items-center gap-2.5 text-purple-100/80 hover:text-white transition-colors">
+                <div className="p-1.5 rounded-lg bg-white/10 text-purple-300">
+                  <Phone size={14} />
+                </div>
+                <span>+880 1776-965533</span>
               </a>
-              <a href="mailto:hello@astropixel.tech" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors break-all">
-                <Mail size={14} /> hello@astropixel.tech
-              </a>
-              <a
-                href="https://astropixel.tech"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 text-xs text-primary hover:underline"
-              >
-                {isBn ? "মূল সাইট → astropixel.tech" : "Main site → astropixel.tech"}
+              <a href="mailto:hello@astropixel.tech" className="flex items-center gap-2.5 text-purple-100/80 hover:text-white transition-colors break-all">
+                <div className="p-1.5 rounded-lg bg-white/10 text-purple-300">
+                  <Mail size={14} />
+                </div>
+                <span>hello@astropixel.tech</span>
               </a>
             </div>
           </div>
@@ -115,18 +119,18 @@ const CoursesFooter = () => {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-border/40">
-        <div className="container mx-auto px-5 sm:px-6 py-4 pb-16 sm:pb-4">
+      <div className="border-t border-white/10 relative z-10 pt-4">
+        <div className="container mx-auto px-5 sm:px-6 pb-16 sm:pb-2">
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
-            <span className="text-[10px] sm:text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Learn with Astropixel
+            <span className="text-xs text-purple-200/70">
+              © {new Date().getFullYear()} <strong className="text-white">Learn with AlphaZero</strong>. All rights reserved.
             </span>
             <button
               onClick={scrollToTop}
-              className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-border bg-secondary flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all"
+              className="group w-9 h-9 rounded-full border border-purple-400/40 bg-white/10 text-white flex items-center justify-center hover:bg-purple-500 hover:border-purple-500 transition-all shadow-md"
               aria-label="Scroll to top"
             >
-              <ArrowUp size={12} className="group-hover:-translate-y-0.5 transition-transform" />
+              <ArrowUp size={14} className="group-hover:-translate-y-0.5 transition-transform" />
             </button>
           </div>
         </div>

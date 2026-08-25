@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { GraduationCap, ArrowLeft, Mail, Lock, User, Sun, Moon, Globe, ShieldCheck, Loader2, RefreshCw, Phone, Users } from 'lucide-react';
 import { z } from 'zod';
+import learnLogoAssetJson from "@/assets/learn-with-alphazero-logo.png.asset.json";
+const learnLogo = learnLogoAssetJson.url;
 
 export default function StudentLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +48,7 @@ export default function StudentLoginPage() {
   const teamMembers = null;
   const teamMembersLoading = false;
   
-  const { user, role, isLoading: authLoading, signIn, signUp } = useAuth();
+  const { user, role, isLoading: authLoading, signIn, signInAsRole, signUp } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -383,42 +385,28 @@ export default function StudentLoginPage() {
             <span className="hidden xs:inline">{t('login.backHome')}</span>
           </Link>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-            
-            {/* Language toggle removed — English only */}
-
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div className="glass-card rounded-2xl border-border/30 overflow-hidden">
-          <div className="text-center space-y-4 p-6 pb-4">
-            <motion.div 
-              initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}
-              className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center"
-            >
-              {showOtpVerification ? (
-                <ShieldCheck className="w-8 h-8 text-primary" />
-              ) : (
-                <GraduationCap className="w-8 h-8 text-primary" />
-              )}
-            </motion.div>
+          <div className="text-center space-y-3 p-6 pb-4">
+            <motion.img 
+              initial={{ scale: 0.85, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              transition={{ delay: 0.2, type: "spring" }}
+              src={learnLogo} 
+              alt="Learn with AlphaZero Logo" 
+              className="h-12 sm:h-14 w-auto mx-auto mb-1 brightness-0 dark:invert"
+            />
             <div>
-              <h1 className="text-2xl font-display font-bold gradient-text">
-                {showOtpVerification ? 'ইমেইল ভেরিফিকেশন' : t('login.studentPortal')}
+              <h1 className="text-3xl font-display font-bold gradient-text">
+                {showOtpVerification ? 'Email Verification' : 'Login'}
               </h1>
               <p className="text-muted-foreground mt-2 text-sm">
                 {showOtpVerification 
-                  ? `${signupEmail} এ পাঠানো ৬ সংখ্যার কোড দিন`
-                  : t('login.startJourney')}
+                  ? `Enter the 6-digit code sent to ${signupEmail}`
+                  : 'Enter your email and password to access your account'}
               </p>
             </div>
           </div>
@@ -449,10 +437,10 @@ export default function StudentLoginPage() {
                 <div className="text-center">
                   {otpTimer > 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      কোডের মেয়াদ: <span className="font-mono font-bold text-primary">{formatTime(otpTimer)}</span>
+                      Code expires in: <span className="font-mono font-bold text-primary">{formatTime(otpTimer)}</span>
                     </p>
                   ) : (
-                    <p className="text-sm text-destructive font-medium">কোডের মেয়াদ শেষ</p>
+                    <p className="text-sm text-destructive font-medium">Code expired</p>
                   )}
                 </div>
 
@@ -465,12 +453,12 @@ export default function StudentLoginPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      যাচাই হচ্ছে...
+                      Verifying...
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      ভেরিফাই করুন
+                      Verify Email
                     </>
                   )}
                 </Button>
@@ -484,7 +472,7 @@ export default function StudentLoginPage() {
                     className="gap-1"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    ফিরে যান
+                    Go Back
                   </Button>
                   
                   <Button 
@@ -499,7 +487,7 @@ export default function StudentLoginPage() {
                     ) : (
                       <RefreshCw className="w-4 h-4" />
                     )}
-                    পুনরায় কোড পাঠান
+                    Resend Code
                   </Button>
                 </div>
               </div>
@@ -507,14 +495,14 @@ export default function StudentLoginPage() {
               /* Login/Signup/Teacher Tabs */
               <Tabs defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login" className="text-sm">{t('login.login')}</TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm">{t('login.signup')}</TabsTrigger>
+                  <TabsTrigger value="login" className="text-sm">Login</TabsTrigger>
+                  <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login">
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-sm">{t('login.email')}</Label>
+                      <Label htmlFor="login-email" className="text-sm">Email Address</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -530,7 +518,7 @@ export default function StudentLoginPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="login-password" className="text-sm">{t('login.password')}</Label>
+                      <Label htmlFor="login-password" className="text-sm">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -548,14 +536,14 @@ export default function StudentLoginPage() {
                     <div className="flex justify-end">
                       <Link 
                         to="/forgot-password" 
-                        className="text-sm text-primary hover:underline"
+                        className="text-sm text-primary hover:underline font-medium"
                       >
-                        পাসওয়ার্ড ভুলে গেছেন?
+                        Forgot password?
                       </Link>
                     </div>
 
-                    <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                      {isLoading ? t('login.loggingIn') : t('login.login')}
+                    <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
+                      {isLoading ? 'Logging in...' : 'Log In'}
                     </Button>
 
                     <div className="relative my-4">
@@ -563,7 +551,7 @@ export default function StudentLoginPage() {
                         <span className="w-full border-t border-border" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-card px-2 text-muted-foreground">অথবা</span>
+                        <span className="bg-card px-2 text-muted-foreground">OR</span>
                       </div>
                     </div>
 
@@ -580,7 +568,7 @@ export default function StudentLoginPage() {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
-                      Google দিয়ে লগইন
+                      Sign in with Google
                     </Button>
                   </form>
                 </TabsContent>
@@ -588,13 +576,13 @@ export default function StudentLoginPage() {
                 <TabsContent value="signup">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name" className="text-sm">{t('login.fullName')}</Label>
+                      <Label htmlFor="signup-name" className="text-sm">Full Name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="signup-name"
                           type="text"
-                          placeholder={t('login.namePlaceholder')}
+                          placeholder="Your Full Name"
                           value={signupName}
                           onChange={(e) => setSignupName(e.target.value)}
                           className="pl-10 h-11"
@@ -604,7 +592,7 @@ export default function StudentLoginPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone" className="text-sm">মোবাইল নম্বর</Label>
+                      <Label htmlFor="signup-phone" className="text-sm">Phone Number</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -620,7 +608,7 @@ export default function StudentLoginPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-sm">{t('login.email')}</Label>
+                      <Label htmlFor="signup-email" className="text-sm">Email Address</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -636,7 +624,7 @@ export default function StudentLoginPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm">{t('login.password')}</Label>
+                      <Label htmlFor="signup-password" className="text-sm">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -653,19 +641,19 @@ export default function StudentLoginPage() {
 
                     <Button 
                       type="button" 
-                      className="w-full h-11 gap-2" 
+                      className="w-full h-11 gap-2 font-semibold" 
                       disabled={sendingOtp}
                       onClick={handleStudentOtp}
                     >
                       {sendingOtp ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          কোড পাঠানো হচ্ছে...
+                          Sending Code...
                         </>
                       ) : (
                         <>
                           <Mail className="w-4 h-4" />
-                          ইমেইল ভেরিফাই করুন
+                          Verify Email
                         </>
                       )}
                     </Button>
@@ -675,7 +663,7 @@ export default function StudentLoginPage() {
                         <span className="w-full border-t border-border" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-card px-2 text-muted-foreground">অথবা</span>
+                        <span className="bg-card px-2 text-muted-foreground">OR</span>
                       </div>
                     </div>
 
@@ -692,7 +680,7 @@ export default function StudentLoginPage() {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
-                      Google দিয়ে সাইন আপ
+                      Sign up with Google
                     </Button>
                   </div>
                 </TabsContent>

@@ -54,8 +54,8 @@ const LearnAboutPage = () => {
       icon: Users,
       title: t("এক্সপার্ট ইনস্ট্রাক্টর", "Expert Instructors"),
       desc: t(
-        "Astropixel এজেন্সির অভিজ্ঞ ক্রিয়েটর ও ডেভেলপারদের কাছ থেকে সরাসরি শিখুন।",
-        "Learn directly from Astropixel agency's experienced creators and developers."
+        "Learn with AlphaZero-র অভিজ্ঞ ক্রিয়েটর ও ডেভেলপারদের কাছ থেকে সরাসরি শিখুন।",
+        "Learn directly from Learn with AlphaZero's experienced creators and developers."
       ),
     },
     {
@@ -123,20 +123,10 @@ const LearnAboutPage = () => {
     <Layout>
       <div className="overflow-x-hidden bg-background">
         {/* Hero */}
-        <section className="pt-32 pb-24 lg:pt-40 lg:pb-32 relative overflow-hidden">
+        <section className="pt-12 pb-16 lg:pt-16 lg:pb-20 relative overflow-hidden">
           <div className="absolute inset-0 mesh-bg" />
           <div className="container mx-auto px-6 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/[0.06] backdrop-blur-sm mb-8"
-              >
-                <GraduationCap size={14} className="text-primary" />
-                <span className="text-xs font-bold tracking-[0.2em] uppercase text-primary">
-                  {cms("hero.badge.bn", "hero.badge.en", "আমাদের সম্পর্কে", "About Learn")}
-                </span>
-              </motion.div>
 
               <motion.img
                 initial={{ opacity: 0, y: -10 }}
