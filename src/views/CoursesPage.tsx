@@ -333,11 +333,27 @@ const CoursesPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Hero Carousel Slides definition
-  const heroSlides = useMemo(
-    () => [
+  // Dynamic Hero Carousel Slides definition
+  const dynamicBannersContent = getPageContent("hero_banners_json");
+  const heroSlides = useMemo(() => {
+    if (dynamicBannersContent) {
+      try {
+        const parsed = JSON.parse(dynamicBannersContent);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem('hero_banners_json');
+      if (local) {
+        try {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch {}
+      }
+    }
+    return [
       {
-        id: 1,
+        id: "1",
         image: "https://nid.edu.bd/wp-content/uploads/2024/05/BBA-web-slider-01-01-01-scaled-e1753431207269.jpg",
         eyebrowBn: getPageContent("hero.eyebrow.bn") || "ডিজিটাল স্কিল একাডেমি",
         eyebrowEn: getPageContent("hero.eyebrow.en") || "Digital Skill Academy",
@@ -354,7 +370,7 @@ const CoursesPage = () => {
         ctaHref: "#courses"
       },
       {
-        id: 2,
+        id: "2",
         image: "https://nid.edu.bd/wp-content/uploads/2024/04/Diploma-course-web-slider-01-01-scaled.jpg",
         eyebrowBn: "AI ও ভাইব কোডিং মাস্টারি",
         eyebrowEn: "AI & Vibe Coding Mastery",
@@ -369,27 +385,9 @@ const CoursesPage = () => {
         ctaBn: "ভাইব কোডিং কোর্স",
         ctaEn: "Vibe Coding Course",
         ctaHref: "/vibe-coding"
-      },
-      {
-        id: 3,
-        image: "https://nid.edu.bd/wp-content/uploads/2024/05/BBA-web-slider-01-01-01-scaled-e1753431207269.jpg",
-        eyebrowBn: "১০০% অনলাইন ও সার্টিফিকেট প্রদান",
-        eyebrowEn: "100% Online & Certified",
-        title1Bn: "প্র্যাক্টিক্যাল শিখুন,",
-        title1En: "Learn practical,",
-        title2Bn: "গড়ুন ক্যারিয়ার।",
-        title2En: "build your career.",
-        title3Bn: "লাইফটাইম অ্যাক্সেস ও সাপোর্ট।",
-        title3En: "Lifetime Access & Support.",
-        subtitleBn: "অভিজ্ঞ মেন্টরদের সার্বক্ষণিক গাইডেন্সে লাইভ ও রেকর্ড ড্যাশবোর্ডে কোর্স করুন। কোর্স সম্পন্ন করে ভেরিফাইড সার্টিফিকেট নিন।",
-        subtitleEn: "Learn directly from expert trainers with lifetime dashboard access, active support, and verifiable digital certificates.",
-        ctaBn: "আমাদের কোর্সসমূহ",
-        ctaEn: "Explore All Courses",
-        ctaHref: "#courses"
       }
-    ],
-    [getPageContent]
-  );
+    ];
+  }, [dynamicBannersContent, getPageContent]);
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 

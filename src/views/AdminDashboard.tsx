@@ -36,6 +36,7 @@ import {
   TrendingUp,
   Shield,
   Camera,
+  Image,
   Edit,
   DollarSign,
   Banknote,
@@ -78,6 +79,10 @@ import LandingPageManagement from '@/components/admin/LandingPageManagement';
 import FeedbackViewer from '@/components/admin/FeedbackViewer';
 import CommentManagement from '@/components/admin/CommentManagement';
 import CouponManagement from '@/components/admin/CouponManagement';
+import HeroBannerManagement from "@/components/admin/HeroBannerManagement";
+import InstructorManagement from "@/components/admin/InstructorManagement";
+import ContactManagement from "@/components/admin/ContactManagement";
+import AboutTeamManagement from "@/components/admin/AboutTeamManagement";
 import AdminAssistant from '@/components/admin/AdminAssistant';
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
@@ -952,6 +957,19 @@ function AdminDashboardInner() {
             </p>
             <div className="space-y-0.5">
               {lmsCoreItems.map((item) => renderNavButton(item, 'from-sky-500 to-cyan-500'))}
+            </div>
+          </div>
+
+          {/* Content & Website Management */}
+          <div className="mb-2">
+            <p className="hidden md:block text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest px-2 mb-1.5">
+              {language === 'bn' ? 'কন্টেন্ট ও পেজেস' : 'Content & Pages'}
+            </p>
+            <div className="space-y-0.5">
+              {renderNavButton({ id: 'banner-management', icon: Image, label: language === 'bn' ? 'হিরো ব্যানার' : 'Hero Banners' } as any, 'from-violet-500 to-purple-500')}
+              {renderNavButton({ id: 'instructor-management', icon: GraduationCap, label: language === 'bn' ? 'ইনস্ট্রাক্টর' : 'Instructors' } as any, 'from-sky-500 to-blue-500')}
+              {renderNavButton({ id: 'contact-management', icon: Phone, label: language === 'bn' ? 'কন্টাক্ট ইনফো' : 'Contact Info' } as any, 'from-emerald-500 to-teal-500')}
+              {renderNavButton({ id: 'about-management', icon: Info, label: language === 'bn' ? 'অ্যাবাউট ও টিম' : 'About & Team' } as any, 'from-pink-500 to-rose-500')}
             </div>
           </div>
 
@@ -2156,6 +2174,26 @@ function AdminDashboardInner() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Hero Banner Management */}
+          <TabsContent value="banner-management">
+            <HeroBannerManagement />
+          </TabsContent>
+
+          {/* Instructor Management */}
+          <TabsContent value="instructor-management">
+            <InstructorManagement />
+          </TabsContent>
+
+          {/* Contact Management */}
+          <TabsContent value="contact-management">
+            <ContactManagement />
+          </TabsContent>
+
+          {/* About & Team Management */}
+          <TabsContent value="about-management">
+            <AboutTeamManagement />
           </TabsContent>
         </Tabs>
       </main>
