@@ -26,8 +26,8 @@ const animationProps: HTMLMotionProps<"button"> = {
   },
 };
 
-interface ShinyButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ShinyButtonProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'> {
   children: React.ReactNode;
   className?: string;
   href?: string;

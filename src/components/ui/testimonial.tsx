@@ -4,7 +4,7 @@ import { TimelineContent } from "@/components/ui/timeline-animation";
 function ClientFeedback() {
   const testimonialRef = useRef<HTMLDivElement>(null);
 
-  const revealVariants = {
+  const revealVariants: any = {
     visible: (i: number) => ({
       y: 0,
       opacity: 1,

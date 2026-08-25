@@ -41,7 +41,7 @@ export function Sparkles({
   useEffect(() => {
     if (!enginePromise) {
       enginePromise = initParticlesEngine(async (engine) => {
-        await loadSlim(engine);
+        await loadSlim(engine as any);
       });
     }
     enginePromise.then(() => setIsReady(true));

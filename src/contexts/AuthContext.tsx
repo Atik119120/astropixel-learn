@@ -59,14 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('*')
           .eq('user_id', userId)
           .maybeSingle(),
-        supabase
-          .from('user_roles')
+        (supabase.from('user_roles') as any)
           .select('role')
           .eq('user_id', userId)
-          .returns<Array<{ role: AppRole }>>()
       ]);
 
-      const fetchedProfile = profileResult.data ? (profileResult.data as Profile) : {
+      const fetchedProfile = (profileResult.data || {
         id: userId,
         user_id: userId,
         full_name: "Student User",
@@ -74,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone_number: "01700000000",
         avatar_url: null,
         created_at: new Date().toISOString()
-      };
+      }) as unknown as Profile;
       const fetchedRole = resolvePrimaryRole(roleResult.data) || 'student';
 
       return { profile: fetchedProfile, role: fetchedRole };
@@ -89,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           phone_number: "01700000000",
           avatar_url: null,
           created_at: new Date().toISOString()
-        }, 
-        role: 'student' 
+        } as unknown as Profile,
+        role: 'student' as AppRole
       };
     }
   };

@@ -159,7 +159,7 @@ export function useStudentLiveClasses() {
         .from('profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', teacherIds);
-      const map = new Map((profs || []).map(p => [p.user_id, p]));
+      const map = new Map<string, { user_id: string; full_name: string; avatar_url: string | null }>((profs || []).map((p: any) => [p.user_id, p]));
       list.forEach(l => {
         const p = map.get(l.teacher_id);
         l.teacher = p ? { full_name: p.full_name, avatar_url: p.avatar_url } : null;
@@ -218,7 +218,7 @@ export function useLiveClassAttendance(liveClassId: string | null) {
         .from('profiles')
         .select('user_id, full_name, email, avatar_url')
         .in('user_id', userIds);
-      const map = new Map((profs || []).map(p => [p.user_id, p]));
+      const map = new Map<string, { user_id: string; full_name: string; email: string; avatar_url: string | null }>((profs || []).map((p: any) => [p.user_id, p]));
       list.forEach(r => {
         const p = map.get(r.user_id);
         r.student = p ? { full_name: p.full_name, email: p.email, avatar_url: p.avatar_url } : null;
