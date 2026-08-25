@@ -52,4 +52,12 @@ Link.displayName = "Link";
 export const NavLink = Link;
 export const BrowserRouter = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 export const Routes = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-export const Route = () => null;
+
+export interface RouteProps {
+  path?: string;
+  element?: React.ReactNode;
+  children?: React.ReactNode;
+  [key: string]: any;
+}
+
+export const Route: React.FC<RouteProps> = () => null;
