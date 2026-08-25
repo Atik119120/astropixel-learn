@@ -8,6 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Settings, Image, Type, Save, Loader2 } from "lucide-react";
+
+interface SiteSetting {
+  id: string;
+  setting_key: string;
+  setting_value: string | null;
+  site_scope?: string;
+  description?: string | null;
+}
+
 const SiteSettingsManagement = ({ filter }: { filter?: 'general' | 'payment' } = {}) => {
   const queryClient = useQueryClient();
   const scope = "learn";

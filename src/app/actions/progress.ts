@@ -81,7 +81,7 @@ export async function updateLessonProgressAction(input: {
     });
 
     // 4. Generate certificate if 100% completed
-    let certificate = null;
+    let certificate: any = null;
     if (isCourseCompleted) {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
