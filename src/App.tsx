@@ -41,54 +41,41 @@ const CourseLandingPage = lazy(() => import("./views/CourseLandingPage"));
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const location = useLocation();
-
   return (
     <>
       <SmoothScroll />
-      <ScrollReveal />
       <ScrollToTop />
 
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <Suspense fallback={<div className="min-h-screen bg-background" />}>
-            <Routes key={location.pathname}>
-              {/* Core Public Pages */}
-              <Route path="/" element={<CoursesPage />} />
-              <Route path="/courses" element={<AllCoursesCatalogPage />} />
-              <Route path="/courses/all" element={<AllCoursesCatalogPage />} />
-              <Route path="/about" element={<LearnAboutPage />} />
-              <Route path="/contact" element={<LearnContactPage />} />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background text-foreground"><div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" /></div>}>
+        <Routes>
+          {/* Core Public Pages */}
+          <Route path="/" element={<CoursesPage />} />
+          <Route path="/courses" element={<AllCoursesCatalogPage />} />
+          <Route path="/courses/all" element={<AllCoursesCatalogPage />} />
+          <Route path="/about" element={<LearnAboutPage />} />
+          <Route path="/contact" element={<LearnContactPage />} />
 
-              {/* Unified Login Portal */}
-              <Route path="/login" element={<StudentLoginPage />} />
-              <Route path="/auth" element={<StudentLoginPage />} />
-              <Route path="/student/login" element={<StudentLoginPage />} />
-              <Route path="/teacher/login" element={<StudentLoginPage />} />
-              <Route path="/admin/login" element={<StudentLoginPage />} />
+          {/* Unified Login Portal */}
+          <Route path="/login" element={<StudentLoginPage />} />
+          <Route path="/auth" element={<StudentLoginPage />} />
+          <Route path="/student/login" element={<StudentLoginPage />} />
+          <Route path="/teacher/login" element={<StudentLoginPage />} />
+          <Route path="/admin/login" element={<StudentLoginPage />} />
 
-              {/* Core Dashboards */}
-              <Route path="/student" element={<StudentDashboard />} />
-              <Route path="/student/*" element={<StudentDashboard />} />
+          {/* Core Dashboards */}
+          <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/*" element={<StudentDashboard />} />
 
-              <Route path="/teacher" element={<TeacherDashboard />} />
-              <Route path="/teacher/*" element={<TeacherDashboard />} />
+          <Route path="/teacher" element={<TeacherDashboard />} />
+          <Route path="/teacher/*" element={<TeacherDashboard />} />
 
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
 
-              {/* 404 Fallback */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </motion.div>
-      </AnimatePresence>
+          {/* 404 Fallback */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }
