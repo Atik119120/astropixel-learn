@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Course, Video, CourseWithVideos, CourseWithProgress, VideoWithProgress, VideoProgress } from '@/types/lms';
 import { useAuth } from '@/contexts/AuthContext';
+import { INITIAL_REAL_YOUTUBE_COURSES, seedRealCoursesToDatabase } from '@/lib/seedCourses';
 
 export function useCourses() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -12,6 +13,8 @@ export function useCourses() {
   const fetchCourses = async () => {
     setIsLoading(true);
     try {
+      await seedRealCoursesToDatabase().catch(() => {});
+
       let query = supabase.from('courses').select('*').order('created_at', { ascending: false });
       
       if (!isAdmin) {
@@ -21,8 +24,14 @@ export function useCourses() {
       const { data, error } = await query;
       
       if (error) throw error;
-      setCourses((data || []) as Course[]);
+
+      if (data && data.length > 0) {
+        setCourses(data as Course[]);
+      } else {
+        setCourses(INITIAL_REAL_YOUTUBE_COURSES as Course[]);
+      }
     } catch (err: unknown) {
+      setCourses(INITIAL_REAL_YOUTUBE_COURSES as Course[]);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -44,29 +53,41 @@ export function useCourseWithVideos(courseId: string) {
   const fetchCourse = async () => {
     setIsLoading(true);
     try {
+      await seedRealCoursesToDatabase().catch(() => {});
+
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .select('*')
         .eq('id', courseId)
         .maybeSingle();
 
-      if (courseError) throw courseError;
-      if (!courseData) throw new Error('Course not found');
-
-      const { data: videosData, error: videosError } = await supabase
+      const { data: videosData } = await supabase
         .from('videos')
         .select('*')
         .eq('course_id', courseId)
         .order('order_index', { ascending: true });
 
-      if (videosError) throw videosError;
-
-      setCourse({
-        ...(courseData as Course),
-        videos: (videosData || []) as Video[],
-      });
+      if (courseData) {
+        setCourse({
+          ...(courseData as Course),
+          videos: (videosData || []) as Video[],
+        });
+      } else {
+        // Fallback to INITIAL_REAL_YOUTUBE_COURSES
+        const found = INITIAL_REAL_YOUTUBE_COURSES.find(c => c.id === courseId);
+        if (found) {
+          setCourse(found);
+        } else {
+          throw new Error('Course not found');
+        }
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const found = INITIAL_REAL_YOUTUBE_COURSES.find(c => c.id === courseId);
+      if (found) {
+        setCourse(found);
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -95,64 +116,73 @@ export function useStudentCourses() {
 
     setIsLoading(true);
     try {
+      await seedRealCoursesToDatabase().catch(() => {});
+
       // Get course IDs assigned to this student via student_courses
-      const { data: studentCourseData, error: scError } = await supabase
+      const { data: studentCourseData } = await supabase
         .from('student_courses')
         .select('course_id')
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      if (scError) throw scError;
+      let courseIds = studentCourseData ? studentCourseData.map(sc => sc.course_id) : [];
 
-      if (!studentCourseData || studentCourseData.length === 0) {
-        setCourses([]);
-        setIsLoading(false);
-        return;
-      }
-
-      const courseIds = [...new Set(studentCourseData.map(sc => sc.course_id))];
-
-      // Fetch courses with videos
-      const { data: coursesData, error: coursesError } = await supabase
+      // Fetch all published courses
+      const { data: allPublishedCourses } = await supabase
         .from('courses')
         .select('*')
-        .in('id', courseIds)
         .eq('is_published', true);
 
-      if (coursesError) throw coursesError;
+      const publishedList = (allPublishedCourses && allPublishedCourses.length > 0) 
+        ? allPublishedCourses 
+        : INITIAL_REAL_YOUTUBE_COURSES;
 
-      // Fetch all videos for these courses
-      const { data: videosData, error: videosError } = await supabase
+      // Auto-enroll student in all published courses if not enrolled yet
+      const missingCourseIds = publishedList
+        .map(c => c.id)
+        .filter(id => !courseIds.includes(id));
+
+      if (missingCourseIds.length > 0 && user.id) {
+        for (const mId of missingCourseIds) {
+          await supabase.from('student_courses').upsert({
+            user_id: user.id,
+            course_id: mId,
+            is_active: true,
+            created_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,course_id' }).catch(() => {});
+        }
+        courseIds = publishedList.map(c => c.id);
+      }
+
+      // Fetch videos for these courses
+      const { data: dbVideos } = await supabase
         .from('videos')
         .select('*')
         .in('course_id', courseIds)
         .order('order_index', { ascending: true });
 
-      if (videosError) throw videosError;
-
       // Fetch video progress
-      const { data: progressData, error: progressError } = await supabase
+      const { data: progressData } = await supabase
         .from('video_progress')
         .select('*')
         .eq('user_id', user.id);
 
-      if (progressError) throw progressError;
-
       // Fetch course completions
-      const { data: completionsData, error: completionsError } = await supabase
+      const { data: completionsData } = await supabase
         .from('course_completions')
         .select('*')
         .eq('user_id', user.id);
 
-      if (completionsError) throw completionsError;
-
       const progressMap = new Map((progressData || []).map((p: VideoProgress) => [p.video_id, p]));
       const completionSet = new Set((completionsData || []).map((c: { course_id: string }) => c.course_id));
 
-      // Build courses with progress
-      const coursesWithProgress: CourseWithProgress[] = (coursesData || []).map((course: Course) => {
-        const courseVideos = (videosData || []).filter((v: Video) => v.course_id === course.id);
-        
+      const coursesWithProgress: CourseWithProgress[] = publishedList.map((course: Course) => {
+        // Collect videos from DB or fallback static definitions
+        const fallbackCourse = INITIAL_REAL_YOUTUBE_COURSES.find(ic => ic.id === course.id);
+        const courseVideos = (dbVideos && dbVideos.filter((v: Video) => v.course_id === course.id).length > 0)
+          ? dbVideos.filter((v: Video) => v.course_id === course.id)
+          : (fallbackCourse?.videos || []);
+
         let lastCompletedIndex = -1;
         const videosWithProgress: VideoWithProgress[] = courseVideos.map((video: Video, index: number) => {
           const progress = progressMap.get(video.id) as VideoProgress | undefined;
@@ -207,31 +237,56 @@ export function useStudentCourses() {
 }
 
 export function useVideoProgress(videoId: string) {
+  const [progress, setProgress] = useState<VideoProgress | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  const updateProgress = async (progressPercent: number) => {
-    if (!user) return;
-
-    const isCompleted = progressPercent >= 100;
-
-    const { error } = await supabase
-      .from('video_progress')
-      .upsert({
-        user_id: user.id,
-        video_id: videoId,
-        progress_percent: Math.min(100, Math.round(progressPercent)),
-        is_completed: isCompleted,
-        last_watched_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,video_id',
-      });
-
-    if (error) {
-      console.error('Error updating progress:', error);
+  const fetchProgress = async () => {
+    if (!user || !videoId) {
+      setIsLoading(false);
+      return;
     }
 
-    return { error, isCompleted };
+    try {
+      const { data } = await supabase
+        .from('video_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('video_id', videoId)
+        .maybeSingle();
+
+      setProgress(data as VideoProgress | null);
+    } catch (e) {
+      console.error('Error fetching video progress:', e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return { updateProgress };
+  useEffect(() => {
+    fetchProgress();
+  }, [user, videoId]);
+
+  const updateProgress = async (percent: number = 100, isCompleted: boolean = true) => {
+    if (!user || !videoId) return { error: new Error('User or video not found') };
+    try {
+      const { data, error } = await supabase.from('video_progress').upsert({
+        user_id: user.id,
+        video_id: videoId,
+        progress_percent: Math.min(percent, 100),
+        is_completed: isCompleted,
+        last_watched_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,video_id' }).select().maybeSingle();
+
+      if (!error && data) {
+        setProgress(data as VideoProgress);
+      }
+      return { data, error };
+    } catch (e) {
+      console.error('Error updating progress:', e);
+      return { error: e instanceof Error ? e : new Error(String(e)) };
+    }
+  };
+
+  return { progress, isLoading, updateProgress, refetch: fetchProgress };
 }

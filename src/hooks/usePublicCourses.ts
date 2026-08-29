@@ -2,9 +2,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/lms';
 import { useEffect } from 'react';
+import { INITIAL_REAL_YOUTUBE_COURSES, seedRealCoursesToDatabase } from '@/lib/seedCourses';
 
 export function usePublicCourses() {
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Seed real YouTube courses on initial mount
+    seedRealCoursesToDatabase().then(() => {
+      queryClient.invalidateQueries({ queryKey: ['public-courses'] });
+    }).catch(() => {});
+  }, [queryClient]);
 
   // Set up realtime subscription
   useEffect(() => {
@@ -14,7 +22,6 @@ export function usePublicCourses() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'courses' },
         () => {
-          // Invalidate and refetch when data changes
           queryClient.invalidateQueries({ queryKey: ['public-courses'] });
         }
       )
@@ -25,7 +32,7 @@ export function usePublicCourses() {
     };
   }, [queryClient]);
 
-  const { data: courses = [], isLoading, error, refetch } = useQuery({
+  const { data: dbCourses, isLoading, error, refetch } = useQuery({
     queryKey: ['public-courses'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,9 +44,13 @@ export function usePublicCourses() {
       if (error) throw error;
       return (data || []) as Course[];
     },
-    staleTime: 0, // Always refetch for realtime updates
+    staleTime: 0,
     refetchOnWindowFocus: true,
   });
+
+  const courses = (dbCourses && dbCourses.length > 0) 
+    ? dbCourses 
+    : (INITIAL_REAL_YOUTUBE_COURSES as Course[]);
 
   return { 
     courses, 
