@@ -9,9 +9,10 @@ export function usePublicCourses() {
 
   useEffect(() => {
     // Seed real YouTube courses on initial mount
-    seedRealCoursesToDatabase().then(() => {
+    (async () => {
+      try { await seedRealCoursesToDatabase(); } catch {}
       queryClient.invalidateQueries({ queryKey: ['public-courses'] });
-    }).catch(() => {});
+    })();
   }, [queryClient]);
 
   // Set up realtime subscription

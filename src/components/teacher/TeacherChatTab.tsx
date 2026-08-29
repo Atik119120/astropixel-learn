@@ -328,7 +328,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
               .eq('user_id', newMsg.sender_id)
               .single();
             
-            setMessages(prev => [...prev, { ...newMsg, sender: senderProfile }]);
+            setMessages(prev => [...prev, { ...newMsg, sender: senderProfile ?? undefined }]);
           }
         )
         .subscribe();

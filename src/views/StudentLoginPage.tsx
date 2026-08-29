@@ -47,7 +47,7 @@ export default function StudentLoginPage() {
   const teamMembers = null;
   const teamMembersLoading = false;
   
-  const { user, role, isLoading: authLoading, signIn, signInAsRole, signUp } = useAuth();
+  const { user, role, session, isLoading: authLoading, signIn, signUp } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -80,22 +80,16 @@ export default function StudentLoginPage() {
     }
   }, [otpTimer]);
 
-  // Redirect if already logged in - wait for both user AND role to be loaded
+  // Redirect if already logged in — requires REAL session (not just cache)
   useEffect(() => {
-    // Don't redirect while auth is still loading
     if (authLoading) return;
-    
-    // Only redirect if we have both user AND role confirmed
-    if (user && role) {
-      if (role === 'admin') {
-        window.location.href = '/admin';
-      } else if (role === 'teacher') {
-        window.location.href = '/teacher';
-      } else if (role === 'student') {
-        window.location.href = '/student';
-      }
+    // Only auto-redirect if there is an active Supabase session AND confirmed role
+    if (user && role && session) {
+      if (role === 'admin') window.location.href = '/admin';
+      else if (role === 'teacher') window.location.href = '/teacher';
+      else window.location.href = '/student';
     }
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, session, authLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

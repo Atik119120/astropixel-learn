@@ -294,17 +294,19 @@ export async function seedRealCoursesToDatabase(): Promise<void> {
 
       // 2. Insert/Upsert videos for course
       for (const video of course.videos) {
-        await supabase.from('videos').upsert({
-          id: video.id,
-          course_id: video.course_id,
-          title: video.title,
-          video_url: video.video_url,
-          video_type: video.video_type,
-          duration_seconds: video.duration_seconds,
-          order_index: video.order_index,
-          created_at: video.created_at,
-          updated_at: video.updated_at,
-        }, { onConflict: 'id' }).catch((e) => console.warn('Video seed note:', e));
+        try {
+          await supabase.from('videos').upsert({
+            id: video.id,
+            course_id: video.course_id,
+            title: video.title,
+            video_url: video.video_url,
+            video_type: video.video_type,
+            duration_seconds: video.duration_seconds,
+            order_index: video.order_index,
+            created_at: video.created_at,
+            updated_at: video.updated_at,
+          }, { onConflict: 'id' });
+        } catch (e) { console.warn('Video seed note:', e); }
       }
     }
   } catch (err) {

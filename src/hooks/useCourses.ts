@@ -13,7 +13,7 @@ export function useCourses() {
   const fetchCourses = async () => {
     setIsLoading(true);
     try {
-      await seedRealCoursesToDatabase().catch(() => {});
+      try { await seedRealCoursesToDatabase(); } catch {}
 
       let query = supabase.from('courses').select('*').order('created_at', { ascending: false });
       
@@ -53,7 +53,7 @@ export function useCourseWithVideos(courseId: string) {
   const fetchCourse = async () => {
     setIsLoading(true);
     try {
-      await seedRealCoursesToDatabase().catch(() => {});
+      try { await seedRealCoursesToDatabase(); } catch {}
 
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
@@ -116,7 +116,7 @@ export function useStudentCourses() {
 
     setIsLoading(true);
     try {
-      await seedRealCoursesToDatabase().catch(() => {});
+      try { await seedRealCoursesToDatabase(); } catch {}
 
       // Get course IDs assigned to this student via student_courses
       const { data: studentCourseData } = await supabase
@@ -144,12 +144,14 @@ export function useStudentCourses() {
 
       if (missingCourseIds.length > 0 && user.id) {
         for (const mId of missingCourseIds) {
-          await supabase.from('student_courses').upsert({
-            user_id: user.id,
-            course_id: mId,
-            is_active: true,
-            created_at: new Date().toISOString(),
-          }, { onConflict: 'user_id,course_id' }).catch(() => {});
+          try {
+            await supabase.from('student_courses').upsert({
+              user_id: user.id,
+              course_id: mId,
+              is_active: true,
+              created_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,course_id' });
+          } catch {}
         }
         courseIds = publishedList.map(c => c.id);
       }

@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { useCourses } from '@/hooks/useCourses';
 import { useStudentCourseManagement, StudentWithCourses } from '@/hooks/useStudentCourses';
 import { supabase } from '@/integrations/supabase/client';
+import { createTestAccounts } from '@/lib/seedAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,6 +61,8 @@ import {
   Home,
   Info,
   ChevronRight,
+  UserCheck,
+  RefreshCw,
 } from 'lucide-react';
 
 import CourseManagement from '@/components/admin/CourseManagement';
@@ -148,6 +151,9 @@ function AdminDashboardInner() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [deletingStudents, setDeletingStudents] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Seed accounts state
+  const [seedingAccounts, setSeedingAccounts] = useState(false);
 
   // Admin list state
   const [admins, setAdmins] = useState<Array<{
@@ -400,18 +406,18 @@ function AdminDashboardInner() {
   // Calculate total revenue
   const totalRevenue = courseEnrollmentStats.reduce((sum, course) => sum + course.totalSales, 0);
 
-  // 2.5s safety fallback timer for auth loading
-  const isStoredAdmin = typeof window !== 'undefined' && (localStorage.getItem('astropixel_role') === 'admin' || localStorage.getItem('active_app_role') === 'admin');
-  const hasAdminAccess = isAdmin || isStoredAdmin;
-
-  // Redirect non-admin users only when auth finishes and user is not admin
+  // Redirect non-admin users only when auth has finished loading
   useEffect(() => {
-    if (!authLoading && !user && !hasAdminAccess) {
+    if (!authLoading && !user) {
       navigate('/admin/login');
     }
-  }, [user, hasAdminAccess, authLoading, navigate]);
+    if (!authLoading && user && !isAdmin) {
+      navigate('/admin/login');
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
-  if (authLoading && !user && !hasAdminAccess) {
+  // Show loading spinner while checking auth
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -422,7 +428,7 @@ function AdminDashboardInner() {
     );
   }
 
-  if (!user && !hasAdminAccess) {
+  if (!user || !isAdmin) {
     return null;
   }
 
@@ -1074,6 +1080,48 @@ function AdminDashboardInner() {
             </div>
           )}
 
+        </div>
+
+        {/* Setup Panel */}
+        <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/5 border border-violet-500/20 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <UserCheck className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">{language === 'bn' ? 'টেস্ট অ্যাকাউন্ট সেটআপ' : 'Setup Test Accounts'}</p>
+              <p className="text-xs text-muted-foreground">Admin • Teacher • Student অ্যাকাউন্ট তৈরি করুন</p>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 text-xs border-violet-500/50 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+              disabled={seedingAccounts}
+              onClick={async () => {
+                setSeedingAccounts(true);
+                try {
+                  const results = await createTestAccounts();
+                  results.forEach(r => {
+                    if (r.startsWith('✅')) toast.success(r);
+                    else if (r.startsWith('⚠️')) toast(r);
+                    else toast.error(r);
+                  });
+                } catch (e: any) {
+                  toast.error(e.message);
+                } finally {
+                  setSeedingAccounts(false);
+                }
+              }}
+            >
+              {seedingAccounts ? <RefreshCw className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
+              {seedingAccounts ? 'Creating...' : 'Create Test Accounts'}
+            </Button>
+            <div className="text-xs text-muted-foreground self-center hidden md:block">
+              admin@astropixel.online / Admin@2026!
+            </div>
+          </div>
         </div>
 
         {/* Content Area */}

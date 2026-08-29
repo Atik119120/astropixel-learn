@@ -119,25 +119,35 @@ export default function TeacherDashboard() {
   const { tickets, isLoading: ticketsLoading, refetch: refetchTickets, updateTicketStatus, sendMessage } = useTeacherTickets();
   const { withdrawals, isLoading: withdrawalsLoading, refetch: refetchWithdrawals, createWithdrawal } = useWithdrawals();
 
-  // Auth check
-  const storedRole = typeof window !== 'undefined' ? (localStorage.getItem('astropixel_role') || localStorage.getItem('active_app_role')) : null;
+  // Auth check — redirect if not teacher
+  const storedRole = typeof window !== 'undefined' ? localStorage.getItem('ap_role') : null;
   const effectiveRole = role || storedRole;
 
   useEffect(() => {
     if (!authLoading) {
-      if (!user && !storedRole) {
+      if (!user) {
         navigate('/student/login');
         return;
       }
       if (effectiveRole && effectiveRole !== 'teacher') {
-        if (effectiveRole === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/student');
-        }
+        if (effectiveRole === 'admin') navigate('/admin');
+        else navigate('/student');
       }
     }
-  }, [user, role, effectiveRole, storedRole, authLoading, navigate]);
+  }, [user, role, effectiveRole, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-300">Verifying Teacher Access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || role !== 'teacher') return null;
 
   const handleLogout = async () => {
     await signOut();
