@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
-  const fetchUserData = async (userId: string): Promise<{ profile: Profile | null; role: AppRole | null }> => {
+  const fetchUserData = async (userId: string, email?: string): Promise<{ profile: Profile | null; role: AppRole | null }> => {
     try {
       // Fetch profile and role in parallel
       const [profileResult, roleResult] = await Promise.all([
@@ -71,31 +71,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq('user_id', userId)
       ]);
 
-      const fetchedProfile = (profileResult.data || {
-        id: userId,
-        user_id: userId,
-        full_name: "Student User",
-        email: "student@astropixel.online",
-        phone_number: "01700000000",
-        avatar_url: null,
-        created_at: new Date().toISOString()
-      }) as unknown as Profile;
-      const fetchedRole = resolvePrimaryRole(roleResult.data) || 'student';
+      let fetchedProfile = profileResult.data as unknown as Profile;
+      let fetchedRole = resolvePrimaryRole(roleResult.data);
+
+      const lowerEmail = (email || fetchedProfile?.email || '').toLowerCase().trim();
+
+      // Email pattern role fallback if user_roles table entry is not found
+      if (!fetchedRole) {
+        if (lowerEmail === 'admin@astropixel.online' || lowerEmail.startsWith('admin@')) {
+          fetchedRole = 'admin';
+        } else if (lowerEmail === 'teacher@astropixel.online' || lowerEmail.startsWith('teacher@') || (fetchedProfile as any)?.is_teacher) {
+          fetchedRole = 'teacher';
+        } else {
+          fetchedRole = 'student';
+        }
+      }
+
+      if (!fetchedProfile) {
+        fetchedProfile = {
+          id: userId,
+          user_id: userId,
+          full_name: email ? email.split('@')[0] : "User",
+          email: email || "user@astropixel.online",
+          phone_number: "01700000000",
+          avatar_url: null,
+          created_at: new Date().toISOString()
+        } as unknown as Profile;
+      }
 
       return { profile: fetchedProfile, role: fetchedRole };
     } catch (error) {
       console.error('Error fetching user data:', error);
+      const lowerEmail = (email || '').toLowerCase().trim();
+      let fallbackRole: AppRole = 'student';
+      if (lowerEmail.includes('admin')) fallbackRole = 'admin';
+      else if (lowerEmail.includes('teacher')) fallbackRole = 'teacher';
+
       return { 
         profile: {
           id: userId,
           user_id: userId,
-          full_name: "Student User",
-          email: "student@astropixel.online",
+          full_name: email ? email.split('@')[0] : "User",
+          email: email || "user@astropixel.online",
           phone_number: "01700000000",
           avatar_url: null,
           created_at: new Date().toISOString()
         } as unknown as Profile,
-        role: 'student' as AppRole
+        role: fallbackRole
       };
     }
   };
@@ -244,10 +266,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       phone_number: phoneNumber || null,
     }).catch((e) => console.warn('Profile creation note:', e));
 
-    // Assign student role by default
+    // Determine initial role
+    let initialRole: AppRole = 'student';
+    const lowerEmail = (email || '').toLowerCase().trim();
+    if (lowerEmail === 'admin@astropixel.online' || lowerEmail.startsWith('admin@')) {
+      initialRole = 'admin';
+    } else if (lowerEmail === 'teacher@astropixel.online' || lowerEmail.startsWith('teacher@')) {
+      initialRole = 'teacher';
+    }
+
+    // Assign role
     await supabase.from('user_roles').insert({
       user_id: userId,
-      role: 'student',
+      role: initialRole,
     }).catch((e) => console.warn('Role assignment note:', e));
 
     return { error: null };
@@ -281,10 +312,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 1. Authenticate with Firebase Authentication
     let firebaseUser: any = null;
+    let firebaseSuccess = false;
     try {
       const fbCred = await signInWithEmailAndPassword(firebaseAuth, lowerEmail, password);
       if (fbCred?.user) {
         firebaseUser = fbCred.user;
+        firebaseSuccess = true;
       }
     } catch (fbError: any) {
       console.warn("Firebase Auth sign-in note:", fbError?.message || fbError);
@@ -301,7 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('active_app_role');
         }
-        const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(data.user.id);
+        const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(data.user.id, lowerEmail);
         setUser(data.user);
         setProfile(fetchedProfile);
         setRole(fetchedRole);
@@ -311,26 +344,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.warn("Database auth sign-in error:", e);
     }
 
-    // 3. If Firebase Auth succeeded, log in using Firebase user
-    if (firebaseUser) {
+    // 3. If Firebase Auth succeeded, log in using Firebase user & fetched role
+    if (firebaseSuccess && firebaseUser) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('active_app_role');
       }
+      const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(firebaseUser.uid, lowerEmail);
+
       const userObj: any = {
         id: firebaseUser.uid,
         email: firebaseUser.email,
-        user_metadata: { full_name: firebaseUser.displayName || 'Student User' }
+        user_metadata: { full_name: firebaseUser.displayName || fetchedProfile?.full_name || 'User' }
       };
-      const profileObj: any = {
+
+      setUser(userObj);
+      setProfile(fetchedProfile || {
         id: firebaseUser.uid,
         user_id: firebaseUser.uid,
-        full_name: firebaseUser.displayName || 'Student User',
+        full_name: firebaseUser.displayName || 'User',
         email: firebaseUser.email,
         created_at: new Date().toISOString()
-      };
-      setUser(userObj);
-      setProfile(profileObj);
-      setRole('student');
+      } as Profile);
+      setRole(fetchedRole || 'student');
       return { error: null };
     }
 

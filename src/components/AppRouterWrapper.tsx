@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { BrowserRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 
 export function AppRouterWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <BrowserRouter>
+    <MemoryRouter>
       {children}
-    </BrowserRouter>
+    </MemoryRouter>
   );
 }
