@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, Profile } from '@/types/lms';
@@ -34,7 +34,7 @@ const LOCAL_STORAGE_PROFILE_KEY = 'astropixel_profile';
 const LOCAL_STORAGE_ROLE_KEY = 'astropixel_role';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Synchronously initialize state from localStorage to prevent flash/redirect on refresh
+  // Synchronously initialize state from localStorage only if user exists
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
+      const cachedUser = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+      if (!cachedUser) return null;
       const cached = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
       return cached ? JSON.parse(cached) : null;
     } catch {
@@ -60,6 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
+      const cachedUser = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+      if (!cachedUser) return null;
       const cached = localStorage.getItem(LOCAL_STORAGE_ROLE_KEY) || localStorage.getItem('active_app_role');
       return (cached as AppRole) || null;
     } catch {
@@ -67,12 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const cachedUser = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
-    const cachedRole = localStorage.getItem(LOCAL_STORAGE_ROLE_KEY) || localStorage.getItem('active_app_role');
-    return !(cachedUser && cachedRole);
-  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const saveAuthToStorage = (u: User | any | null, p: Profile | null, r: AppRole | null) => {
     if (typeof window === 'undefined') return;
@@ -89,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(LOCAL_STORAGE_PROFILE_KEY);
       }
 
-      if (r) {
+      if (r && u) {
         localStorage.setItem(LOCAL_STORAGE_ROLE_KEY, r);
         localStorage.setItem('active_app_role', r);
       } else {
@@ -197,6 +196,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(fetchedProfile);
           setRole(fetchedRole || 'student');
           saveAuthToStorage(userObj, fetchedProfile, fetchedRole || 'student');
+          setIsLoading(false);
+        }
+      } else {
+        const supabaseSession = (await supabase.auth.getSession()).data.session;
+        const cachedUser = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+        if (!supabaseSession && !cachedUser && isMounted) {
+          setUser(null);
+          setProfile(null);
+          setRole(null);
+          saveAuthToStorage(null, null, null);
           setIsLoading(false);
         }
       }
@@ -450,9 +459,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     role,
     isLoading,
-    isAdmin: role === 'admin',
-    isTeacher: role === 'teacher',
-    isStudent: role === 'student',
+    isAdmin: !!user && role === 'admin',
+    isTeacher: !!user && role === 'teacher',
+    isStudent: !!user && role === 'student',
     signUp,
     signIn,
     signInAsRole,
