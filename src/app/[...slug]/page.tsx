@@ -36,11 +36,11 @@ export default function DynamicSubRoute() {
     if (pathname === "/courses" || pathname === "/courses/all") return <AllCoursesCatalogPage />;
     if (pathname === "/about") return <LearnAboutPage />;
     if (pathname === "/contact") return <LearnContactPage />;
+    if (pathname === "/teacher/login") return <TeacherLoginPage />;
+    if (pathname === "/admin/login") return <AdminLoginPage />;
     if (
       pathname === "/login" ||
       pathname === "/student/login" ||
-      pathname === "/teacher/login" ||
-      pathname === "/admin/login" ||
       pathname === "/student/register" ||
       pathname === "/auth"
     ) {
@@ -48,9 +48,7 @@ export default function DynamicSubRoute() {
     }
     if (pathname.startsWith("/student/course/")) return <CourseViewerPage />;
     if (pathname.startsWith("/student")) return <StudentDashboard />;
-    if (pathname === "/teacher/login") return <TeacherLoginPage />;
     if (pathname.startsWith("/teacher")) return <TeacherDashboard />;
-    if (pathname === "/admin/login") return <AdminLoginPage />;
     if (pathname.startsWith("/admin")) return <AdminDashboard />;
     if (pathname === "/dashboard") return <DashboardPage />;
     if (pathname === "/my-certificates" || pathname === "/student/certificates") return <MyCertificatesPage />;
