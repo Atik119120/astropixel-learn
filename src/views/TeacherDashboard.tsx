@@ -120,26 +120,24 @@ export default function TeacherDashboard() {
   const { withdrawals, isLoading: withdrawalsLoading, refetch: refetchWithdrawals, createWithdrawal } = useWithdrawals();
 
   // Auth check
+  const storedRole = typeof window !== 'undefined' ? (localStorage.getItem('astropixel_role') || localStorage.getItem('active_app_role')) : null;
+  const effectiveRole = role || storedRole;
+
   useEffect(() => {
     if (!authLoading) {
-      if (!user) {
+      if (!user && !storedRole) {
         navigate('/student/login');
         return;
       }
-      if (role !== 'teacher') {
-        if (role === 'admin') {
+      if (effectiveRole && effectiveRole !== 'teacher') {
+        if (effectiveRole === 'admin') {
           navigate('/admin');
         } else {
           navigate('/student');
         }
-        toast({
-          title: 'Access Denied',
-          description: 'You do not have teacher access.',
-          variant: 'destructive',
-        });
       }
     }
-  }, [user, role, authLoading, navigate, toast]);
+  }, [user, role, effectiveRole, storedRole, authLoading, navigate]);
 
   const handleLogout = async () => {
     await signOut();

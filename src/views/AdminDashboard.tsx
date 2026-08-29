@@ -401,20 +401,17 @@ function AdminDashboardInner() {
   const totalRevenue = courseEnrollmentStats.reduce((sum, course) => sum + course.totalSales, 0);
 
   // 2.5s safety fallback timer for auth loading
-  const [authTimeout, setAuthTimeout] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setAuthTimeout(true), 2500);
-    return () => clearTimeout(timer);
-  }, []);
+  const isStoredAdmin = typeof window !== 'undefined' && (localStorage.getItem('astropixel_role') === 'admin' || localStorage.getItem('active_app_role') === 'admin');
+  const hasAdminAccess = isAdmin || isStoredAdmin;
 
-  // Redirect non-admin users
+  // Redirect non-admin users only when auth finishes and user is not admin
   useEffect(() => {
-    if ((!authLoading || authTimeout) && (!user || !isAdmin)) {
+    if (!authLoading && !user && !hasAdminAccess) {
       navigate('/admin/login');
     }
-  }, [user, isAdmin, authLoading, authTimeout, navigate]);
+  }, [user, hasAdminAccess, authLoading, navigate]);
 
-  if (authLoading && !authTimeout) {
+  if (authLoading && !user && !hasAdminAccess) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -425,7 +422,7 @@ function AdminDashboardInner() {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user && !hasAdminAccess) {
     return null;
   }
 

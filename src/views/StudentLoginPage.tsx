@@ -88,11 +88,11 @@ export default function StudentLoginPage() {
     // Only redirect if we have both user AND role confirmed
     if (user && role) {
       if (role === 'admin') {
-        navigate('/admin', { replace: true });
+        window.location.href = '/admin';
       } else if (role === 'teacher') {
-        navigate('/teacher', { replace: true });
+        window.location.href = '/teacher';
       } else if (role === 'student') {
-        navigate('/student', { replace: true });
+        window.location.href = '/student';
       }
     }
   }, [user, role, authLoading, navigate]);

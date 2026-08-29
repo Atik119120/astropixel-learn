@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, Profile } from '@/types/lms';
@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
-  updateProfile as updateFirebaseProfile 
+  updateProfile as updateFirebaseProfile,
+  onAuthStateChanged as onFirebaseAuthStateChanged
 } from 'firebase/auth';
 
 interface AuthContextType {
@@ -17,6 +18,8 @@ interface AuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isTeacher: boolean;
+  isStudent: boolean;
   signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInAsRole: (targetRole: AppRole, email?: string, password?: string) => Promise<{ error: null }>;
@@ -26,23 +29,76 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<AppRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const isInitializedRef = React.useRef(false);
+const LOCAL_STORAGE_USER_KEY = 'astropixel_user';
+const LOCAL_STORAGE_PROFILE_KEY = 'astropixel_profile';
+const LOCAL_STORAGE_ROLE_KEY = 'astropixel_role';
 
-  const isRefreshTokenNotFoundError = (err: unknown) => {
-    const anyErr = err as any;
-    const code = String(anyErr?.code ?? '').toLowerCase();
-    const message = String(anyErr?.message ?? '').toLowerCase();
-    return (
-      code === 'refresh_token_not_found' ||
-      message.includes('refresh token not found') ||
-      message.includes('invalid refresh token')
-    );
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Synchronously initialize state from localStorage to prevent flash/redirect on refresh
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [session, setSession] = useState<Session | null>(null);
+
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [role, setRole] = useState<AppRole | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_ROLE_KEY) || localStorage.getItem('active_app_role');
+      return (cached as AppRole) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const cachedUser = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+    const cachedRole = localStorage.getItem(LOCAL_STORAGE_ROLE_KEY) || localStorage.getItem('active_app_role');
+    return !(cachedUser && cachedRole);
+  });
+
+  const saveAuthToStorage = (u: User | any | null, p: Profile | null, r: AppRole | null) => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (u) {
+        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(u));
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+      }
+
+      if (p) {
+        localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, JSON.stringify(p));
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_PROFILE_KEY);
+      }
+
+      if (r) {
+        localStorage.setItem(LOCAL_STORAGE_ROLE_KEY, r);
+        localStorage.setItem('active_app_role', r);
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_ROLE_KEY);
+        localStorage.removeItem('active_app_role');
+      }
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
   };
 
   const resolvePrimaryRole = (roles: Array<{ role: AppRole }> | null | undefined): AppRole | null => {
@@ -59,7 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserData = async (userId: string, email?: string): Promise<{ profile: Profile | null; role: AppRole | null }> => {
     try {
-      // Fetch profile and role in parallel
       const [profileResult, roleResult] = await Promise.all([
         supabase
           .from('profiles')
@@ -76,7 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const lowerEmail = (email || fetchedProfile?.email || '').toLowerCase().trim();
 
-      // Email pattern role fallback if user_roles table entry is not found
       if (!fetchedRole) {
         if (lowerEmail === 'admin@astropixel.online' || lowerEmail.startsWith('admin@')) {
           fetchedRole = 'admin';
@@ -122,111 +176,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const ensureOnboarding = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('ensure-student-onboarding', {
-        body: {},
-      });
-
-      if (error) {
-        console.error('ensure-student-onboarding error:', error);
-        return;
-      }
-
-      if (data?.error) {
-        console.error('ensure-student-onboarding failed:', data.error);
-      }
-    } catch (e) {
-      console.error('ensure-student-onboarding unexpected error:', e);
-    }
-  };
-
   useEffect(() => {
     let isMounted = true;
 
-    const initializeAuth = async (currentSession: Session | null) => {
+    // 1. Firebase Auth listener for persistent Firebase session across refreshes
+    const unsubscribeFirebase = onFirebaseAuthStateChanged(firebaseAuth, async (fbUser) => {
       if (!isMounted) return;
+      if (fbUser) {
+        const lowerEmail = (fbUser.email || '').toLowerCase().trim();
+        const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(fbUser.uid, lowerEmail);
 
-      if (currentSession?.user) {
-        try {
-          // Run onboarding asynchronously in background without blocking auth
-          ensureOnboarding().catch((err) => console.error('Onboarding background error:', err));
-          
-          // Fetch user data
-          const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(currentSession.user.id);
-          
-          if (isMounted) {
-            setProfile(fetchedProfile);
-            setRole(fetchedRole);
-          }
-        } catch (error) {
-          console.error('Error initializing auth:', error);
-          if (isMounted) {
-            setProfile(null);
-            setRole(null);
-          }
-        }
-      } else {
+        const userObj: any = {
+          id: fbUser.uid,
+          email: fbUser.email,
+          user_metadata: { full_name: fbUser.displayName || fetchedProfile?.full_name || 'User' }
+        };
+
         if (isMounted) {
-          setProfile(null);
-          setRole(null);
+          setUser(userObj);
+          setProfile(fetchedProfile);
+          setRole(fetchedRole || 'student');
+          saveAuthToStorage(userObj, fetchedProfile, fetchedRole || 'student');
+          setIsLoading(false);
         }
       }
-
-      if (isMounted) {
-        setIsLoading(false);
-        isInitializedRef.current = true;
-      }
-    };
-
-    // Set up auth state listener FIRST
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      // Update session and user synchronously
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      // Only set loading true if we're initialized (not during initial load)
-      if (isInitializedRef.current) {
-        setIsLoading(true);
-      }
-
-      // Handle auth changes with setTimeout to avoid deadlocks
-      setTimeout(() => {
-        initializeAuth(session);
-      }, 0);
     });
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      // If browser has an old/invalid refresh token cached, clear it so login pages can load.
-      if (error && isRefreshTokenNotFoundError(error)) {
-        console.warn('Clearing invalid cached session (refresh token not found)');
-        setSession(null);
-        setUser(null);
+    // 2. Supabase Auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (!isMounted) return;
+      setSession(currentSession);
 
-        // Defer signOut to avoid any potential auth callback deadlocks
-        setTimeout(() => {
-          supabase.auth
-            .signOut()
-            .catch(() => {
-              // ignore
-            })
-            .finally(() => {
-              initializeAuth(null);
-            });
-        }, 0);
-        return;
+      if (currentSession?.user) {
+        setUser(currentSession.user);
+        const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(currentSession.user.id, currentSession.user.email);
+        if (isMounted) {
+          setProfile(fetchedProfile);
+          setRole(fetchedRole);
+          saveAuthToStorage(currentSession.user, fetchedProfile, fetchedRole);
+          setIsLoading(false);
+        }
+      } else {
+        if (!firebaseAuth.currentUser && !localStorage.getItem(LOCAL_STORAGE_USER_KEY)) {
+          if (isMounted) {
+            setUser(null);
+            setProfile(null);
+            setRole(null);
+            saveAuthToStorage(null, null, null);
+            setIsLoading(false);
+          }
+        } else {
+          if (isMounted) setIsLoading(false);
+        }
       }
+    });
 
-      setSession(session);
-      setUser(session?.user ?? null);
-      initializeAuth(session);
+    // Check existing Supabase session
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      if (!isMounted) return;
+      if (currentSession?.user) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(currentSession.user.id, currentSession.user.email);
+        if (isMounted) {
+          setProfile(fetchedProfile);
+          setRole(fetchedRole);
+          saveAuthToStorage(currentSession.user, fetchedProfile, fetchedRole);
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
     });
 
     return () => {
       isMounted = false;
+      unsubscribeFirebase();
       subscription.unsubscribe();
     };
   }, []);
@@ -234,7 +259,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, fullName: string, phoneNumber?: string) => {
     let firebaseUser: any = null;
 
-    // 1. Register user with Firebase Authentication
     try {
       const fbCred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       if (fbCred.user) {
@@ -242,10 +266,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await updateFirebaseProfile(fbCred.user, { displayName: fullName });
       }
     } catch (fbError: any) {
-      console.warn("Firebase Auth sign-up warning:", fbError?.message || fbError);
+      console.warn("Firebase Auth sign-up note:", fbError?.message || fbError);
     }
 
-    // 2. Also register in Database Auth & insert profile
     const redirectUrl = `${window.location.origin}/`;
     const { data } = await supabase.auth.signUp({
       email,
@@ -258,7 +281,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const userId = data?.user?.id || firebaseUser?.uid || `user-${Date.now()}`;
 
-    // Create profile
     await supabase.from('profiles').insert({
       user_id: userId,
       full_name: fullName,
@@ -266,7 +288,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       phone_number: phoneNumber || null,
     }).catch((e) => console.warn('Profile creation note:', e));
 
-    // Determine initial role
     let initialRole: AppRole = 'student';
     const lowerEmail = (email || '').toLowerCase().trim();
     if (lowerEmail === 'admin@astropixel.online' || lowerEmail.startsWith('admin@')) {
@@ -275,11 +296,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       initialRole = 'teacher';
     }
 
-    // Assign role
     await supabase.from('user_roles').insert({
       user_id: userId,
       role: initialRole,
     }).catch((e) => console.warn('Role assignment note:', e));
+
+    const newProfile = {
+      id: userId,
+      user_id: userId,
+      full_name: fullName,
+      email: email,
+      phone_number: phoneNumber || null,
+      created_at: new Date().toISOString()
+    } as unknown as Profile;
+
+    const userObj: any = {
+      id: userId,
+      email: email,
+      user_metadata: { full_name: fullName }
+    };
+
+    setUser(userObj);
+    setProfile(newProfile);
+    setRole(initialRole);
+    saveAuthToStorage(userObj, newProfile, initialRole);
 
     return { error: null };
   };
@@ -298,12 +338,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: targetRole,
       created_at: new Date().toISOString()
     };
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('active_app_role', targetRole);
-    }
+
     setUser(mockTestUser);
     setProfile(mockTestProfile);
     setRole(targetRole);
+    saveAuthToStorage(mockTestUser, mockTestProfile, targetRole);
+
     return { error: null };
   };
 
@@ -331,24 +371,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!error && data?.user) {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('active_app_role');
-        }
         const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(data.user.id, lowerEmail);
         setUser(data.user);
         setProfile(fetchedProfile);
-        setRole(fetchedRole);
+        setRole(fetchedRole || 'student');
+        saveAuthToStorage(data.user, fetchedProfile, fetchedRole || 'student');
         return { error: null };
       }
     } catch (e) {
-      console.warn("Database auth sign-in error:", e);
+      console.warn("Database auth sign-in note:", e);
     }
 
     // 3. If Firebase Auth succeeded, log in using Firebase user & fetched role
     if (firebaseSuccess && firebaseUser) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('active_app_role');
-      }
       const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(firebaseUser.uid, lowerEmail);
 
       const userObj: any = {
@@ -357,15 +392,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_metadata: { full_name: firebaseUser.displayName || fetchedProfile?.full_name || 'User' }
       };
 
-      setUser(userObj);
-      setProfile(fetchedProfile || {
+      const finalProfile = fetchedProfile || ({
         id: firebaseUser.uid,
         user_id: firebaseUser.uid,
         full_name: firebaseUser.displayName || 'User',
         email: firebaseUser.email,
         created_at: new Date().toISOString()
       } as Profile);
-      setRole(fetchedRole || 'student');
+
+      const finalRole = fetchedRole || 'student';
+
+      setUser(userObj);
+      setProfile(finalProfile);
+      setRole(finalRole);
+      saveAuthToStorage(userObj, finalProfile, finalRole);
+
       return { error: null };
     }
 
@@ -388,17 +429,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await firebaseSignOut(firebaseAuth);
     } catch (e) {}
     await supabase.auth.signOut().catch(() => {});
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('active_app_role');
-    }
     setUser(null);
     setProfile(null);
     setRole(null);
+    saveAuthToStorage(null, null, null);
   };
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchUserData(user.id);
+      const { profile: fetchedProfile, role: fetchedRole } = await fetchUserData(user.id, user.email);
+      setProfile(fetchedProfile);
+      setRole(fetchedRole);
+      saveAuthToStorage(user, fetchedProfile, fetchedRole);
     }
   };
 
@@ -409,6 +451,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role,
     isLoading,
     isAdmin: role === 'admin',
+    isTeacher: role === 'teacher',
+    isStudent: role === 'student',
     signUp,
     signIn,
     signInAsRole,
