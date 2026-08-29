@@ -106,7 +106,7 @@ export default function TeacherDashboard() {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const t = translations[language];
+  const t = language === "bn" ? translations.bn : translations.en;
 
   const [activeTab, setActiveTab] = useState('dashboard');
   

@@ -213,8 +213,8 @@ const CoursesPage = () => {
   const { language } = useLanguage();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const t = translations[language];
   const isBn = language === "bn";
+  const t = isBn ? translations.bn : translations.en;
   const { getContent: getPageContent } = usePageContent("courses", "learn");
   const cms = (bnKey: string, enKey: string, bnFb: string, enFb: string) =>
     isBn ? (getPageContent(bnKey) || bnFb) : (getPageContent(enKey) || enFb);

@@ -53,7 +53,7 @@ export default function TeacherLoginPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
-  const t = translations[language];
+  const t = language === "bn" ? translations.bn : translations.en;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
