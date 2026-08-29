@@ -187,7 +187,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error) {
-      return { error: new Error('ইমেইল বা পাসওয়ার্ড ভুল। সঠিক তথ্য দিয়ে চেষ্টা করুন।') };
+      console.error("Login Error:", error);
+      if (error.message.includes('Invalid login credentials')) {
+        return { error: new Error('ইমেইল বা পাসওয়ার্ড ভুল। সঠিক তথ্য দিয়ে চেষ্টা করুন।') };
+      }
+      return { error: new Error(`লগইন সমস্যা: ${error.message}`) };
     }
 
     if (data?.user) {
