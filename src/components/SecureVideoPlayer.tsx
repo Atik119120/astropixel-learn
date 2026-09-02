@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/config';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
@@ -94,13 +95,10 @@ function YouTubeCustomPlayer({
   // Load progress from DB
   useEffect(() => {
     const loadProgress = async () => {
-      const { data } = await supabase
-        .from('video_progress')
-        .select('watched_seconds, last_position, is_completed')
-        .eq('user_id', userId)
-        .eq('video_id', videoId)
-        .maybeSingle();
-      if (data) {
+      const progressRef = doc(db, 'video_progress', `${userId}_${videoId}`);
+      const progressSnap = await getDoc(progressRef);
+      if (progressSnap.exists()) {
+        const data = progressSnap.data();
         const maxW = Math.max(data.watched_seconds || 0, data.last_position || 0, maxWatchedSeconds);
         setHighestWatched(maxW);
         if (data.is_completed) setIsCompleted(true);
@@ -186,13 +184,14 @@ function YouTubeCustomPlayer({
   const saveProgress = useCallback(async (seconds: number, completed: boolean) => {
     const dur = playerRef.current?.getDuration?.() || duration;
     const percent = dur > 0 ? Math.round((seconds / dur) * 100) : 0;
-    await supabase.from('video_progress').upsert({
+    const progressRef = doc(db, 'video_progress', `${userId}_${videoId}`);
+    await setDoc(progressRef, {
       user_id: userId, video_id: videoId,
       progress_percent: Math.min(percent, 100), is_completed: completed,
       last_watched_at: new Date().toISOString(),
       watched_seconds: Math.round(Math.max(seconds, highestWatched)),
       last_position: Math.round(seconds),
-    }, { onConflict: 'user_id,video_id' });
+    }, { merge: true });
   }, [userId, videoId, duration, highestWatched]);
 
   const togglePlay = () => {
@@ -434,13 +433,10 @@ export default function SecureVideoPlayer({
   // Load existing progress from DB
   useEffect(() => {
     const loadProgress = async () => {
-      const { data } = await supabase
-        .from('video_progress')
-        .select('watched_seconds, last_position, is_completed')
-        .eq('user_id', userId)
-        .eq('video_id', videoId)
-        .maybeSingle();
-      if (data) {
+      const progressRef = doc(db, 'video_progress', `${userId}_${videoId}`);
+      const progressSnap = await getDoc(progressRef);
+      if (progressSnap.exists()) {
+        const data = progressSnap.data();
         const maxW = Math.max(data.watched_seconds || 0, data.last_position || 0, maxWatchedSeconds);
         setHighestWatched(maxW);
         if (data.is_completed) {
@@ -473,7 +469,8 @@ export default function SecureVideoPlayer({
   // Save progress to DB
   const saveProgress = useCallback(async (seconds: number, completed: boolean) => {
     const percent = duration > 0 ? Math.round((seconds / duration) * 100) : 0;
-    await supabase.from('video_progress').upsert({
+    const progressRef = doc(db, 'video_progress', `${userId}_${videoId}`);
+    await setDoc(progressRef, {
       user_id: userId,
       video_id: videoId,
       progress_percent: Math.min(percent, 100),
@@ -481,7 +478,7 @@ export default function SecureVideoPlayer({
       last_watched_at: new Date().toISOString(),
       watched_seconds: Math.round(Math.max(seconds, highestWatched)),
       last_position: Math.round(seconds),
-    }, { onConflict: 'user_id,video_id' });
+    }, { merge: true });
   }, [userId, videoId, duration, highestWatched]);
 
   const handleTimeUpdate = () => {

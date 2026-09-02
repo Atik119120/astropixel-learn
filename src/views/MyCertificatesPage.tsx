@@ -32,7 +32,7 @@ export default function MyCertificatesPage() {
     const { data, error } = await supabase
       .from('certificates')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user.uid)
       .order('issued_at', { ascending: false });
 
     if (error) {

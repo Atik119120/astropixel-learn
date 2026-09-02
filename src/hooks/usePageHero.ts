@@ -1,17 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/config";
 
 export function usePageHero(pageName: string) {
   const { data } = useQuery({
     queryKey: ["page-hero", pageName],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("page_content")
-        .select("content_key, content_en")
-        .eq("page_name", pageName);
-      if (error) throw error;
+      const q = query(collection(db, "page_content"), where("page_name", "==", pageName));
+      const snap = await getDocs(q);
       const map: Record<string, string> = {};
-      (data ?? []).forEach((r: any) => {
+      snap.forEach((docSnap) => {
+        const r = docSnap.data();
         if (r.content_en) map[r.content_key] = r.content_en;
       });
       return map;

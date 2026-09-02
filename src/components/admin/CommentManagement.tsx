@@ -94,7 +94,7 @@ export default function CommentManagement() {
     if (!replyText.trim() || !user) return;
     setSending(true);
     const { error } = await supabase.from('lesson_comments').insert({
-      user_id: user.id,
+      user_id: user.uid,
       video_id: comment.video_id,
       course_id: comment.course_id,
       parent_id: comment.id,

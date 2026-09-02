@@ -1,0 +1,1 @@
+const fs = require('fs'); ['src/views/AdminLoginPage.tsx', 'src/views/StudentLoginPage.tsx', 'src/views/TeacherLoginPage.tsx'].forEach(f => { try { let c = fs.readFileSync(f, 'utf8'); c = 'import { supabase } from \'@/integrations/supabase/client\';\n' + c; fs.writeFileSync(f, c); console.log('Added to', f); } catch(e){ console.error(e); } });

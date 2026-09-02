@@ -56,13 +56,13 @@ export default function StudentSupportChat({ language }: Props) {
 
   // Fetch teachers of enrolled courses
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
     (async () => {
       setLoading(true);
       const { data: enrolls } = await supabase
         .from('student_courses')
         .select('course_id')
-        .eq('user_id', user.id)
+        .eq('user_id', user.uid)
         .eq('is_active', true);
       const courseIds = enrolls?.map(e => e.course_id) || [];
       if (!courseIds.length) { setTeachers([]); setLoading(false); return; }
@@ -94,11 +94,11 @@ export default function StudentSupportChat({ language }: Props) {
       setTeachers(Array.from(map.values()));
       setLoading(false);
     })();
-  }, [user?.id]);
+  }, [user?.uid]);
 
   // Find or create direct room with a teacher
   const openChat = async (teacher: TeacherContact) => {
-    if (!user?.id || !profile?.id) {
+    if (!user?.uid || !profile?.id) {
       toast.error('Profile not loaded');
       return;
     }
@@ -108,7 +108,7 @@ export default function StudentSupportChat({ language }: Props) {
 
     // Rooms I'm a member of
     const { data: myMemberships, error: mmErr } = await supabase
-      .from('chat_room_members').select('room_id').eq('user_id', user.id);
+      .from('chat_room_members').select('room_id').eq('user_id', user.uid);
     if (mmErr) console.error('memberships err', mmErr);
     const myRoomIds = (myMemberships || []).map(m => m.room_id);
 
@@ -145,7 +145,7 @@ export default function StudentSupportChat({ language }: Props) {
 
     // Add self first
     const { error: m1 } = await supabase.from('chat_room_members').upsert({
-      room_id: newRoom.id, user_id: user.id,
+      room_id: newRoom.id, user_id: user.uid,
     }, { onConflict: 'room_id,user_id' });
     if (m1) {
       console.error('add self err', m1);
@@ -187,13 +187,13 @@ export default function StudentSupportChat({ language }: Props) {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const send = async () => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
     if (!roomId) { toast.error('Chat not ready, click the teacher again'); return; }
     if (!input.trim()) return;
     const msg = input.trim();
     setInput('');
     const { error } = await supabase.from('chat_messages').insert({
-      room_id: roomId, sender_id: user.id, message: msg,
+      room_id: roomId, sender_id: user.uid, message: msg,
     });
     if (error) {
       console.error('send err', error);
@@ -290,7 +290,7 @@ export default function StudentSupportChat({ language }: Props) {
               <ScrollArea className="flex-1 p-4 bg-slate-50/60 dark:bg-slate-950/40">
                 <div className="space-y-2">
                   {messages.map(m => {
-                    const mine = m.sender_id === user?.id;
+                    const mine = m.sender_id === user?.uid;
                     return (
                       <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[75%] px-3.5 py-2 rounded-2xl ${

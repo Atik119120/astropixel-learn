@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { collection, getDocs, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { Course } from '@/types/lms';
 import { useEffect } from 'react';
 import { INITIAL_REAL_YOUTUBE_COURSES, seedRealCoursesToDatabase } from '@/lib/seedCourses';
@@ -17,33 +18,27 @@ export function usePublicCourses() {
 
   // Set up realtime subscription
   useEffect(() => {
-    const channel = supabase
-      .channel('courses-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'courses' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['public-courses'] });
-        }
-      )
-      .subscribe();
+    const q = query(collection(db, 'courses'), where('is_published', '==', true));
+    const unsubscribe = onSnapshot(q, () => {
+      queryClient.invalidateQueries({ queryKey: ['public-courses'] });
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [queryClient]);
 
   const { data: dbCourses, isLoading, error, refetch } = useQuery({
     queryKey: ['public-courses'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return (data || []) as Course[];
+      const q = query(
+        collection(db, 'courses'),
+        where('is_published', '==', true),
+        orderBy('created_at', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return data as Course[];
     },
     staleTime: 0,
     refetchOnWindowFocus: true,

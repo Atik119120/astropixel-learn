@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
+import { collection, query, where, orderBy, getDocs, doc, setDoc } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -66,23 +67,14 @@ export default function CourseViewerPage() {
     if (!user) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    supabase
-      .from('video_progress')
-      .select('id', { count: 'exact' })
-      .eq('user_id', user.id)
-      .eq('is_completed', true)
-      .gte('last_watched_at', today.toISOString())
-      .then(({ count }) => setDailyClassCount(count || 0));
+    getDocs(query(collection(db, 'video_progress'), where('user_id', '==', user.uid), where('is_completed', '==', true), where('last_watched_at', '>=', today.toISOString())))
+      .then((snapshot) => setDailyClassCount(snapshot.size || 0));
   }, [user]);
 
   useEffect(() => {
     if (selectedVideo) {
-      supabase
-        .from('video_materials')
-        .select('*')
-        .eq('video_id', selectedVideo.id)
-        .order('order_index', { ascending: true })
-        .then(({ data }) => setVideoMaterials((data || []) as VideoMaterial[]));
+      getDocs(query(collection(db, 'video_materials'), where('video_id', '==', selectedVideo.id), orderBy('order_index', 'asc')))
+        .then((snapshot) => setVideoMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as VideoMaterial[]));
       setWatchThresholdMet(false);
     }
   }, [selectedVideo?.id]);
@@ -117,20 +109,16 @@ export default function CourseViewerPage() {
 
     const completedCount = course.videos.filter(v => v.progress?.is_completed || v.id === selectedVideo.id).length;
     if (completedCount === course.total_videos) {
-      const { data: existingCert } = await supabase
-        .from('certificates')
-        .select('certificate_id')
-        .eq('user_id', user.id)
-        .eq('course_id', course.id)
-        .maybeSingle();
-      if (!existingCert) {
+      const certsQuery = query(collection(db, 'certificates'), where('user_id', '==', user.uid), where('course_id', '==', course.id));
+      const existingCertSnap = await getDocs(certsQuery);
+      if (existingCertSnap.empty) {
         const certId = `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-        await supabase.from('certificates').insert({
-          certificate_id: certId, user_id: user.id, course_id: course.id,
+        await setDoc(doc(collection(db, 'certificates')), {
+          certificate_id: certId, user_id: user.uid, course_id: course.id,
           student_name: profile?.full_name || '', course_name: course.title,
         });
-        await supabase.from('course_completions').insert({
-          user_id: user.id, course_id: course.id, certificate_id: certId,
+        await setDoc(doc(collection(db, 'course_completions')), {
+          user_id: user.uid, course_id: course.id, certificate_id: certId,
         });
         toast.success('🎉 কোর্স সম্পন্ন! সার্টিফিকেট তৈরি হয়েছে');
       }
@@ -255,7 +243,7 @@ export default function CourseViewerPage() {
                 videoUrl={selectedVideo.video_url}
                 videoType={selectedVideo.video_type}
                 videoId={selectedVideo.id}
-                userId={user.id}
+                userId={user.uid}
                 onComplete={handleVideoComplete}
                 initialPosition={selectedVideo.progress?.last_position || 0}
                 maxWatchedSeconds={selectedVideo.progress?.watched_seconds || 0}

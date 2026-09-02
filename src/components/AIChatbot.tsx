@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, Sparkles, MessageCircle, Image, Video, Paperclip, Play, Mic, MicOff, Square } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/config";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/env";
 import logoAssetJson from "@/assets/logo.png.asset.json";
 const logo = logoAssetJson.url;
@@ -79,20 +80,20 @@ const AIChatbot = () => {
       const ext = file.name.split('.').pop();
       const fileName = `chatbot/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       
-      const { data, error } = await supabase.storage
-        .from("media-uploads")
-        .upload(fileName, file, { cacheControl: "3600", upsert: false });
+      const storage = getStorage();
+      const fileRef = ref(storage, `media-uploads/${fileName}`);
       
-      if (!error && data) {
-        const { data: urlData } = supabase.storage
-          .from("media-uploads")
-          .getPublicUrl(data.path);
+      try {
+        await uploadBytes(fileRef, file, { customMetadata: { cacheControl: "3600" } });
+        const publicUrl = await getDownloadURL(fileRef);
         
         newAttachments.push({
           type: isImage ? "image" : "video",
-          url: urlData.publicUrl,
+          url: publicUrl,
           name: file.name,
         });
+      } catch (error) {
+        console.error(error);
       }
     }
     
@@ -131,18 +132,16 @@ const AIChatbot = () => {
         
         setIsUploading(true);
         const fileName = `chatbot/voice-${Date.now()}.webm`;
-        const { data, error } = await supabase.storage
-          .from("media-uploads")
-          .upload(fileName, audioBlob, { cacheControl: "3600", contentType: "audio/webm" });
-
-        if (!error && data) {
-          const { data: urlData } = supabase.storage
-            .from("media-uploads")
-            .getPublicUrl(data.path);
+        const storage = getStorage();
+        const fileRef = ref(storage, `media-uploads/${fileName}`);
+        
+        try {
+          await uploadBytes(fileRef, audioBlob, { contentType: "audio/webm", customMetadata: { cacheControl: "3600" } });
+          const publicUrl = await getDownloadURL(fileRef);
           
           const voiceAttachment: Attachment = {
             type: "audio",
-            url: urlData.publicUrl,
+            url: publicUrl,
             name: "Voice message",
           };
           
@@ -151,6 +150,8 @@ const AIChatbot = () => {
             language === "bn" ? "🎤 ভয়েস মেসেজ" : "🎤 Voice message",
             [voiceAttachment]
           );
+        } catch (error) {
+          console.error(error);
         }
         setIsUploading(false);
       };

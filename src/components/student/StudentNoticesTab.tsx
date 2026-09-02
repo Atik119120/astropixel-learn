@@ -54,7 +54,7 @@ export default function StudentNoticesTab({ language }: StudentNoticesTabProps) 
   const [readNotices, setReadNotices] = useState<Set<string>>(new Set());
 
   const fetchNotices = async () => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
     
     try {
       const { data, error } = await supabase
@@ -72,7 +72,7 @@ export default function StudentNoticesTab({ language }: StudentNoticesTabProps) 
       const { data: reads } = await supabase
         .from('notice_reads')
         .select('notice_id')
-        .eq('user_id', user.id);
+        .eq('user_id', user.uid);
       
       const readIds = new Set<string>((reads?.map((r: any) => r.notice_id as string) || []));
       setReadNotices(readIds);
@@ -107,17 +107,17 @@ export default function StudentNoticesTab({ language }: StudentNoticesTabProps) 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.uid]);
 
   const markAsRead = async (noticeId: string) => {
-    if (!user?.id || readNotices.has(noticeId)) return;
+    if (!user?.uid || readNotices.has(noticeId)) return;
     
     try {
       await supabase
         .from('notice_reads')
         .insert({
           notice_id: noticeId,
-          user_id: user.id,
+          user_id: user.uid,
         });
       
       setReadNotices(prev => new Set([...prev, noticeId]));

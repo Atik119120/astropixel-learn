@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { collection, query, where, orderBy, getDocs, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { Course, Video, CourseWithVideos, CourseWithProgress, VideoWithProgress, VideoProgress } from '@/types/lms';
 import { useAuth } from '@/contexts/AuthContext';
 import { INITIAL_REAL_YOUTUBE_COURSES, seedRealCoursesToDatabase } from '@/lib/seedCourses';
@@ -15,16 +16,15 @@ export function useCourses() {
     try {
       try { await seedRealCoursesToDatabase(); } catch {}
 
-      let query = supabase.from('courses').select('*').order('created_at', { ascending: false });
+      let q = query(collection(db, 'courses'), orderBy('created_at', 'desc'));
       
       if (!isAdmin) {
-        query = query.eq('is_published', true);
+        q = query(collection(db, 'courses'), where('is_published', '==', true), orderBy('created_at', 'desc'));
       }
 
-      const { data, error } = await query;
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      if (error) throw error;
-
       if (data && data.length > 0) {
         setCourses(data as Course[]);
       } else {
@@ -55,17 +55,13 @@ export function useCourseWithVideos(courseId: string) {
     try {
       try { await seedRealCoursesToDatabase(); } catch {}
 
-      const { data: courseData, error: courseError } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('id', courseId)
-        .maybeSingle();
+      const courseDocRef = doc(db, 'courses', courseId);
+      const courseDocSnap = await getDoc(courseDocRef);
+      const courseData = courseDocSnap.exists() ? { id: courseDocSnap.id, ...courseDocSnap.data() } : null;
 
-      const { data: videosData } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true });
+      const videosQuery = query(collection(db, 'videos'), where('course_id', '==', courseId), orderBy('order_index', 'asc'));
+      const videosSnapshot = await getDocs(videosQuery);
+      const videosData = videosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       if (courseData) {
         setCourse({
@@ -119,64 +115,65 @@ export function useStudentCourses() {
       try { await seedRealCoursesToDatabase(); } catch {}
 
       // Get course IDs assigned to this student via student_courses
-      const { data: studentCourseData } = await supabase
-        .from('student_courses')
-        .select('course_id')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
+      const studentCoursesQuery = query(collection(db, 'student_courses'), where('user_id', '==', user.uid), where('is_active', '==', true));
+      const studentCourseDataSnapshot = await getDocs(studentCoursesQuery);
+      const studentCourseData = studentCourseDataSnapshot.docs.map(doc => doc.data());
 
       let courseIds = studentCourseData ? studentCourseData.map(sc => sc.course_id) : [];
 
       // Fetch all published courses
-      const { data: allPublishedCourses } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('is_published', true);
+      const publishedCoursesQuery = query(collection(db, 'courses'), where('is_published', '==', true));
+      const allPublishedCoursesSnapshot = await getDocs(publishedCoursesQuery);
+      const allPublishedCourses = allPublishedCoursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[];
 
       const publishedList = (allPublishedCourses && allPublishedCourses.length > 0) 
         ? allPublishedCourses 
-        : INITIAL_REAL_YOUTUBE_COURSES;
+        : INITIAL_REAL_YOUTUBE_COURSES as Course[];
 
       // Auto-enroll student in all published courses if not enrolled yet
       const missingCourseIds = publishedList
         .map(c => c.id)
         .filter(id => !courseIds.includes(id));
 
-      if (missingCourseIds.length > 0 && user.id) {
+      if (missingCourseIds.length > 0 && user.uid) {
         for (const mId of missingCourseIds) {
           try {
-            await supabase.from('student_courses').upsert({
-              user_id: user.id,
+            const docId = `${user.uid}_${mId}`;
+            await setDoc(doc(db, 'student_courses', docId), {
+              user_id: user.uid,
               course_id: mId,
               is_active: true,
               created_at: new Date().toISOString(),
-            }, { onConflict: 'user_id,course_id' });
+            }, { merge: true });
           } catch {}
         }
         courseIds = publishedList.map(c => c.id);
       }
 
       // Fetch videos for these courses
-      const { data: dbVideos } = await supabase
-        .from('videos')
-        .select('*')
-        .in('course_id', courseIds)
-        .order('order_index', { ascending: true });
+      let dbVideos: Video[] = [];
+      if (courseIds.length > 0) {
+        // Firestore 'in' query supports up to 10 items.
+        // We do multiple queries if needed, or we just fetch all videos.
+        // For simplicity we just fetch all and filter client side.
+        const vQuery = query(collection(db, 'videos'), orderBy('order_index', 'asc'));
+        const vSnapshot = await getDocs(vQuery);
+        dbVideos = vSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Video[];
+        dbVideos = dbVideos.filter(v => courseIds.includes(v.course_id));
+      }
 
       // Fetch video progress
-      const { data: progressData } = await supabase
-        .from('video_progress')
-        .select('*')
-        .eq('user_id', user.id);
+      const progressQuery = query(collection(db, 'video_progress'), where('user_id', '==', user.uid));
+      const progressSnapshot = await getDocs(progressQuery);
+      const progressData = progressSnapshot.docs.map(d => d.data() as VideoProgress);
 
       // Fetch course completions
-      const { data: completionsData } = await supabase
-        .from('course_completions')
-        .select('*')
-        .eq('user_id', user.id);
+      const completionsQuery = query(collection(db, 'course_completions'), where('user_id', '==', user.uid));
+      const completionsSnapshot = await getDocs(completionsQuery);
+      const completionsData = completionsSnapshot.docs.map(d => d.data());
 
       const progressMap = new Map((progressData || []).map((p: VideoProgress) => [p.video_id, p]));
-      const completionSet = new Set((completionsData || []).map((c: { course_id: string }) => c.course_id));
+      const completionSet = new Set((completionsData || []).map((c: any) => c.course_id));
 
       const coursesWithProgress: CourseWithProgress[] = publishedList.map((course: Course) => {
         // Collect videos from DB or fallback static definitions
@@ -250,14 +247,14 @@ export function useVideoProgress(videoId: string) {
     }
 
     try {
-      const { data } = await supabase
-        .from('video_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('video_id', videoId)
-        .maybeSingle();
+      const q = query(collection(db, 'video_progress'), where('user_id', '==', user.uid), where('video_id', '==', videoId));
+      const snapshot = await getDocs(q);
 
-      setProgress(data as VideoProgress | null);
+      if (!snapshot.empty) {
+        setProgress(snapshot.docs[0].data() as VideoProgress);
+      } else {
+        setProgress(null);
+      }
     } catch (e) {
       console.error('Error fetching video progress:', e);
     } finally {
@@ -272,18 +269,19 @@ export function useVideoProgress(videoId: string) {
   const updateProgress = async (percent: number = 100, isCompleted: boolean = true) => {
     if (!user || !videoId) return { error: new Error('User or video not found') };
     try {
-      const { data, error } = await supabase.from('video_progress').upsert({
-        user_id: user.id,
+      const docId = `${user.uid}_${videoId}`;
+      const progressData = {
+        user_id: user.uid,
         video_id: videoId,
         progress_percent: Math.min(percent, 100),
         is_completed: isCompleted,
         last_watched_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,video_id' }).select().maybeSingle();
-
-      if (!error && data) {
-        setProgress(data as VideoProgress);
-      }
-      return { data, error };
+      };
+      
+      await setDoc(doc(db, 'video_progress', docId), progressData, { merge: true });
+      setProgress(progressData as VideoProgress);
+      
+      return { data: progressData, error: null };
     } catch (e) {
       console.error('Error updating progress:', e);
       return { error: e instanceof Error ? e : new Error(String(e)) };

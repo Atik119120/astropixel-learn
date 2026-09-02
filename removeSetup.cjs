@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('src/views/AdminDashboard.tsx', 'utf8'); c = c.replace(/\{\/\* Setup Panel \*\/\}[\s\S]*?\{\/\* Content Area \*\/\}/g, '{/* Content Area */}'); fs.writeFileSync('src/views/AdminDashboard.tsx', c); console.log('Removed');

@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import { CourseWithVideos } from '@/types/lms';
 
 export const INITIAL_REAL_YOUTUBE_COURSES: CourseWithVideos[] = [
@@ -266,36 +265,39 @@ export const INITIAL_REAL_YOUTUBE_COURSES: CourseWithVideos[] = [
   }
 ];
 
+import { db } from '@/integrations/firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
+
 /**
- * Ensures courses and videos are seeded in Supabase database.
+ * Ensures courses and videos are seeded in Firestore database.
  */
 export async function seedRealCoursesToDatabase(): Promise<void> {
   try {
     for (const course of INITIAL_REAL_YOUTUBE_COURSES) {
       // 1. Insert/Upsert course
-      const { error: courseError } = await supabase.from('courses').upsert({
-        id: course.id,
-        title: course.title,
-        title_en: course.title_en,
-        description: course.description,
-        description_en: course.description_en,
-        category: course.category,
-        thumbnail_url: course.thumbnail_url,
-        price: course.price,
-        is_published: course.is_published,
-        trainer_name: course.trainer_name,
-        created_at: course.created_at,
-        updated_at: course.updated_at,
-      }, { onConflict: 'id' });
-
-      if (courseError) {
+      try {
+        await setDoc(doc(db, 'courses', course.id), {
+          id: course.id,
+          title: course.title,
+          title_en: course.title_en,
+          description: course.description,
+          description_en: course.description_en,
+          category: course.category,
+          thumbnail_url: course.thumbnail_url,
+          price: course.price,
+          is_published: course.is_published,
+          trainer_name: course.trainer_name,
+          created_at: course.created_at,
+          updated_at: course.updated_at,
+        }, { merge: true });
+      } catch (courseError) {
         console.warn('Course seed note:', courseError);
       }
 
       // 2. Insert/Upsert videos for course
       for (const video of course.videos) {
         try {
-          await supabase.from('videos').upsert({
+          await setDoc(doc(db, 'videos', video.id), {
             id: video.id,
             course_id: video.course_id,
             title: video.title,
@@ -305,7 +307,7 @@ export async function seedRealCoursesToDatabase(): Promise<void> {
             order_index: video.order_index,
             created_at: video.created_at,
             updated_at: video.updated_at,
-          }, { onConflict: 'id' });
+          }, { merge: true });
         } catch (e) { console.warn('Video seed note:', e); }
       }
     }

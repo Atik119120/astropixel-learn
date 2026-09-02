@@ -1,7 +1,7 @@
+import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,12 +30,16 @@ export default function AdminLoginPage() {
         navigate('/admin');
       } else {
         // Fallback query to verify user_roles directly
-        supabase.from('user_roles').select('role').eq('user_id', user.id).then(({ data }) => {
-          if (data?.some(r => r.role === 'admin')) {
-            navigate('/admin');
-          } else if (role === 'teacher' || data?.some(r => r.role === 'teacher')) {
-            navigate('/teacher');
-          }
+        import('firebase/firestore').then(({ getDoc, doc }) => {
+          import('@/integrations/firebase/config').then(({ db }) => {
+            getDoc(doc(db, 'user_roles', user.uid)).then((docSnap) => {
+              if (docSnap.exists() && docSnap.data().role === 'admin') {
+                navigate('/admin');
+              } else if (role === 'teacher' || (docSnap.exists() && docSnap.data().role === 'teacher')) {
+                navigate('/teacher');
+              }
+            });
+          });
         });
       }
     }

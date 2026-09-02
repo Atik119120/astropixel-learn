@@ -96,7 +96,7 @@ export default function PaymentApiManagement() {
       webhook_secret: form.webhook_secret || null,
       api_key_hash: hash,
       api_key_prefix: key.slice(0, 12),
-      created_by: user?.id,
+      created_by: user?.uid,
     });
     if (error) { toast({ title: error.message, variant: 'destructive' }); return; }
     setShowCreate(false);

@@ -47,12 +47,12 @@ export default function StudentRecordedClassesTab({ language }: Props) {
   const [playing, setPlaying] = useState<Recorded | null>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
     (async () => {
       setLoading(true);
       const { data: enrolls } = await supabase
         .from('student_courses').select('course_id')
-        .eq('user_id', user.id).eq('is_active', true);
+        .eq('user_id', user.uid).eq('is_active', true);
       const courseIds = (enrolls || []).map(e => e.course_id);
       if (!courseIds.length) { setFolders([]); setLoading(false); return; }
 
@@ -68,7 +68,7 @@ export default function StudentRecordedClassesTab({ language }: Props) {
       setFolders(Array.from(map.values()));
       setLoading(false);
     })();
-  }, [user?.id]);
+  }, [user?.uid]);
 
   return (
     <div className="space-y-4">

@@ -1,10 +1,10 @@
+import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -266,7 +266,7 @@ export default function StudentLoginPage() {
           const { error: profileError } = await supabase
             .from('profiles')
             .insert({
-              user_id: authData.user.id,
+              user_id: authData.user.uid,
               full_name: teacherName,
               email: teacherEmail,
               phone_number: teacherPhone,
@@ -283,7 +283,7 @@ export default function StudentLoginPage() {
           const { error: roleError } = await supabase
             .from('user_roles')
             .insert({
-              user_id: authData.user.id,
+              user_id: authData.user.uid,
               role: 'student',
             });
 

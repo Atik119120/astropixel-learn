@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { collection, query, where, getDocs, onSnapshot, doc, setDoc, deleteDoc, orderBy, updateDoc, addDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type LiveClassStatus = 'upcoming' | 'live' | 'ended';
@@ -87,12 +88,25 @@ export function useTeacherLiveClasses() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
-    const { data } = await supabase
-      .from('live_classes')
-      .select('*, course:courses(id,title,title_en)')
-      .eq('teacher_id', user.id)
-      .order('start_time', { ascending: false });
-    setClasses((data as unknown as LiveClass[]) || []);
+    const q = query(collection(db, 'live_classes'), where('teacher_id', '==', user.uid), orderBy('start_time', 'desc'));
+    const snap = await getDocs(q);
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+    
+    const courseIds = [...new Set(list.map(l => l.course_id))];
+    const coursesMap = new Map();
+    if (courseIds.length > 0) {
+      const coursesSnap = await getDocs(collection(db, 'courses'));
+      coursesSnap.docs.forEach(c => {
+        coursesMap.set(c.id, { id: c.id, ...c.data() });
+      });
+    }
+
+    list.forEach(l => {
+      const c = coursesMap.get(l.course_id);
+      if (c) l.course = { id: c.id, title: c.title, title_en: c.title_en };
+    });
+
+    setClasses(list as LiveClass[]);
     setIsLoading(false);
   }, [user]);
 
@@ -100,37 +114,49 @@ export function useTeacherLiveClasses() {
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase
-      .channel('teacher-live-classes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_classes', filter: `teacher_id=eq.${user.id}` }, () => fetchAll())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const q = query(collection(db, 'live_classes'), where('teacher_id', '==', user.uid));
+    const unsub = onSnapshot(q, () => fetchAll());
+    return () => unsub();
   }, [user, fetchAll]);
 
   const create = async (payload: Omit<LiveClass, 'id' | 'created_at' | 'updated_at' | 'teacher_id' | 'youtube_video_id' | 'recording_url' | 'recording_video_id' | 'recording_available' | 'course' | 'teacher'>) => {
     if (!user) return { error: 'Not authenticated' };
     const youtube_video_id = parseYoutubeId(payload.youtube_url);
-    const { error } = await supabase.from('live_classes').insert({
-      ...payload,
-      teacher_id: user.id,
-      youtube_video_id,
-    });
-    if (!error) await fetchAll();
-    return { error: error?.message };
+    try {
+      await addDoc(collection(db, 'live_classes'), {
+        ...payload,
+        teacher_id: user.uid,
+        youtube_video_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      await fetchAll();
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message };
+    }
   };
 
   const update = async (id: string, payload: Partial<LiveClass>) => {
-    const patch = { ...payload };
+    const patch = { ...payload, updated_at: new Date().toISOString() };
     if (payload.youtube_url) patch.youtube_video_id = parseYoutubeId(payload.youtube_url);
-    const { error } = await supabase.from('live_classes').update(patch).eq('id', id);
-    if (!error) await fetchAll();
-    return { error: error?.message };
+    try {
+      await updateDoc(doc(db, 'live_classes', id), patch);
+      await fetchAll();
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message };
+    }
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from('live_classes').delete().eq('id', id);
-    if (!error) await fetchAll();
-    return { error: error?.message };
+    try {
+      await deleteDoc(doc(db, 'live_classes', id));
+      await fetchAll();
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message };
+    }
   };
 
   return { classes, isLoading, refetch: fetchAll, create, update, remove };
@@ -146,26 +172,36 @@ export function useStudentLiveClasses() {
     if (!user) return;
     setIsLoading(true);
     // RLS restricts to enrolled + published
-    const { data: lcData } = await supabase
-      .from('live_classes')
-      .select('*, course:courses(id,title,title_en)')
-      .order('start_time', { ascending: false });
+    const q = query(collection(db, 'live_classes'), orderBy('start_time', 'desc'));
+    const snap = await getDocs(q);
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
 
-    const list = (lcData as unknown as LiveClass[]) || [];
+    // Enrich with courses
+    const courseIds = [...new Set(list.map(l => l.course_id))];
+    const coursesMap = new Map();
+    if (courseIds.length > 0) {
+      const coursesSnap = await getDocs(collection(db, 'courses'));
+      coursesSnap.docs.forEach(c => {
+        coursesMap.set(c.id, { id: c.id, ...c.data() });
+      });
+    }
+    list.forEach(l => {
+      const c = coursesMap.get(l.course_id);
+      if (c) l.course = { id: c.id, title: c.title, title_en: c.title_en };
+    });
+
     // Enrich with teacher profile
     const teacherIds = Array.from(new Set(list.map(l => l.teacher_id)));
     if (teacherIds.length) {
-      const { data: profs } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, avatar_url')
-        .in('user_id', teacherIds);
-      const map = new Map<string, { user_id: string; full_name: string; avatar_url: string | null }>((profs || []).map((p: any) => [p.user_id, p]));
+      const profsSnap = await getDocs(collection(db, 'profiles'));
+      const profs = profsSnap.docs.map(d => ({ user_id: d.id, ...d.data() })).filter((p: any) => teacherIds.includes(p.user_id));
+      const map = new Map<string, any>(profs.map((p: any) => [p.user_id, p]));
       list.forEach(l => {
         const p = map.get(l.teacher_id);
         l.teacher = p ? { full_name: p.full_name, avatar_url: p.avatar_url } : null;
       });
     }
-    setClasses(list);
+    setClasses(list as LiveClass[]);
     setIsLoading(false);
   }, [user]);
 
@@ -173,26 +209,25 @@ export function useStudentLiveClasses() {
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase
-      .channel('student-live-classes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_classes' }, () => fetchAll())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const unsub = onSnapshot(collection(db, 'live_classes'), () => fetchAll());
+    return () => unsub();
   }, [user, fetchAll]);
 
   const recordAttendance = async (lc: LiveClass) => {
     if (!user) return { error: 'Not authenticated' };
-    const { error } = await supabase.from('live_class_attendance').upsert(
-      {
+    const attendanceId = `${lc.id}_${user.uid}`;
+    try {
+      await setDoc(doc(db, 'live_class_attendance', attendanceId), {
         live_class_id: lc.id,
-        user_id: user.id,
+        user_id: user.uid,
         course_id: lc.course_id,
         status: 'joined',
         join_time: new Date().toISOString(),
-      },
-      { onConflict: 'live_class_id,user_id', ignoreDuplicates: true }
-    );
-    return { error: error?.message };
+      }, { merge: true });
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message };
+    }
   };
 
   return { classes, isLoading, refetch: fetchAll, recordAttendance };
@@ -206,25 +241,21 @@ export function useLiveClassAttendance(liveClassId: string | null) {
   const fetchAll = useCallback(async () => {
     if (!liveClassId) { setRecords([]); return; }
     setIsLoading(true);
-    const { data } = await supabase
-      .from('live_class_attendance')
-      .select('*')
-      .eq('live_class_id', liveClassId)
-      .order('join_time', { ascending: true });
-    const list = (data as unknown as AttendanceRecord[]) || [];
+    const q = query(collection(db, 'live_class_attendance'), where('live_class_id', '==', liveClassId), orderBy('join_time', 'asc'));
+    const snap = await getDocs(q);
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+
     const userIds = Array.from(new Set(list.map(r => r.user_id)));
     if (userIds.length) {
-      const { data: profs } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email, avatar_url')
-        .in('user_id', userIds);
-      const map = new Map<string, { user_id: string; full_name: string; email: string; avatar_url: string | null }>((profs || []).map((p: any) => [p.user_id, p]));
+      const profsSnap = await getDocs(collection(db, 'profiles'));
+      const profs = profsSnap.docs.map(d => ({ user_id: d.id, ...d.data() })).filter((p: any) => userIds.includes(p.user_id));
+      const map = new Map<string, any>(profs.map((p: any) => [p.user_id, p]));
       list.forEach(r => {
         const p = map.get(r.user_id);
         r.student = p ? { full_name: p.full_name, email: p.email, avatar_url: p.avatar_url } : null;
       });
     }
-    setRecords(list);
+    setRecords(list as AttendanceRecord[]);
     setIsLoading(false);
   }, [liveClassId]);
 
@@ -242,10 +273,12 @@ export function useRecordedClasses(courseId?: string) {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
-    let q = supabase.from('recorded_classes').select('*').order('recorded_at', { ascending: false });
-    if (courseId) q = q.eq('course_id', courseId);
-    const { data } = await q;
-    setRecords((data as RecordedClass[]) || []);
+    let q = query(collection(db, 'recorded_classes'), orderBy('recorded_at', 'desc'));
+    if (courseId) {
+      q = query(collection(db, 'recorded_classes'), where('course_id', '==', courseId), orderBy('recorded_at', 'desc'));
+    }
+    const snap = await getDocs(q);
+    setRecords(snap.docs.map(d => ({ id: d.id, ...d.data() })) as RecordedClass[]);
     setIsLoading(false);
   }, [user, courseId]);
 
@@ -253,11 +286,9 @@ export function useRecordedClasses(courseId?: string) {
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase
-      .channel('recorded-classes-' + (courseId || 'all'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'recorded_classes' }, () => fetchAll())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let q = query(collection(db, 'recorded_classes'));
+    const unsub = onSnapshot(q, () => fetchAll());
+    return () => unsub();
   }, [user, courseId, fetchAll]);
 
   // Auto-promote ended classes with youtube_video_id → recorded_classes (client-side, dedup by video id)
@@ -276,7 +307,10 @@ export function useRecordedClasses(courseId?: string) {
         recorded_at: lc.end_time,
       }));
     if (toInsert.length) {
-      await supabase.from('recorded_classes').upsert(toInsert, { onConflict: 'live_class_id', ignoreDuplicates: true });
+      for (const item of toInsert) {
+        const id = item.live_class_id;
+        await setDoc(doc(db, 'recorded_classes', id), item, { merge: true });
+      }
       await fetchAll();
     }
   }, [records, fetchAll]);

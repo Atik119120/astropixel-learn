@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, orderBy } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { TeacherStats, TeacherCourse, RevenueRecord, PaidWork, StudentProgress, SupportTicket, WithdrawalRequest } from '@/types/teacher';
 
@@ -16,41 +17,31 @@ export function useTeacherStats() {
       setIsLoading(true);
 
       // Fetch teacher's courses
-      const { data: courses, error: coursesError } = await supabase
-        .from('courses')
-        .select('id, course_type, price')
-        .eq('teacher_id', profile.id);
-
-      if (coursesError) throw coursesError;
+      const qCourses = query(collection(db, 'courses'), where('teacher_id', '==', profile.id));
+      const coursesSnap = await getDocs(qCourses);
+      const courses = coursesSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
 
       // Fetch revenue records
-      const { data: revenue, error: revenueError } = await supabase
-        .from('revenue_records')
-        .select('*')
-        .eq('teacher_id', profile.id)
-        .eq('status', 'approved');
-
-      if (revenueError) throw revenueError;
+      const qRevenue = query(collection(db, 'revenue_records'), where('teacher_id', '==', profile.id), where('status', '==', 'approved'));
+      const revenueSnap = await getDocs(qRevenue);
+      const revenue = revenueSnap.docs.map(d => d.data()) as any[];
 
       // Fetch withdrawal requests
-      const { data: withdrawals, error: withdrawalsError } = await supabase
-        .from('withdrawal_requests')
-        .select('*')
-        .eq('teacher_id', profile.id);
-
-      if (withdrawalsError) throw withdrawalsError;
+      const qWithdrawals = query(collection(db, 'withdrawal_requests'), where('teacher_id', '==', profile.id));
+      const withdrawalsSnap = await getDocs(qWithdrawals);
+      const withdrawals = withdrawalsSnap.docs.map(d => d.data()) as any[];
 
       // Fetch enrolled students count for teacher's courses
       const courseIds = courses?.map(c => c.id) || [];
       let totalStudents = 0;
 
       if (courseIds.length > 0) {
-        const { count } = await supabase
-          .from('student_courses')
-          .select('*', { count: 'exact', head: true })
-          .in('course_id', courseIds)
-          .eq('is_active', true);
-        totalStudents = count || 0;
+        for (let i = 0; i < courseIds.length; i += 10) {
+          const chunk = courseIds.slice(i, i + 10);
+          const qStudents = query(collection(db, 'student_courses'), where('course_id', 'in', chunk), where('is_active', '==', true));
+          const studentsSnap = await getDocs(qStudents);
+          totalStudents += studentsSnap.size;
+        }
       }
 
       // Calculate stats
@@ -125,46 +116,27 @@ export function useTeacherCourses() {
       // Also include courses where this teacher is a co-instructor (course_instructors)
       let coInstructorCourseIds: string[] = [];
       if (profile.linked_team_member_id) {
-        const { data: ciRows } = await supabase
-          .from('course_instructors')
-          .select('course_id')
-          .eq('instructor_id', profile.linked_team_member_id);
-        coInstructorCourseIds = (ciRows || []).map((r: any) => r.course_id);
+        const qCi = query(collection(db, 'course_instructors'), where('instructor_id', '==', profile.linked_team_member_id));
+        const ciSnap = await getDocs(qCi);
+        coInstructorCourseIds = ciSnap.docs.map(d => d.data().course_id);
       }
 
-      const orFilter = coInstructorCourseIds.length
-        ? `teacher_id.eq.${profile.id},id.in.(${coInstructorCourseIds.join(',')})`
-        : `teacher_id.eq.${profile.id}`;
-
-      const { data, error: fetchError } = await supabase
-        .from('courses')
-        .select(`
-          *,
-          videos:videos(id)
-        `)
-        .or(orFilter)
-        .order('created_at', { ascending: false });
-
-      if (fetchError) throw fetchError;
-
+      const qCourses = query(collection(db, 'courses'), orderBy('created_at', 'desc'));
+      const coursesSnap = await getDocs(qCourses);
+      const allCourses = coursesSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      
+      const data = allCourses.filter(c => c.teacher_id === profile.id || coInstructorCourseIds.includes(c.id));
 
       // Get enrolled students count for each course
       const coursesWithStats = await Promise.all(
-        (data || []).map(async (course) => {
-          const { count } = await supabase
-            .from('student_courses')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', course.id)
-            .eq('is_active', true);
+        data.map(async (course) => {
+          const qStudents = query(collection(db, 'student_courses'), where('course_id', '==', course.id), where('is_active', '==', true));
+          const snapStudents = await getDocs(qStudents);
+          const count = snapStudents.size;
 
-          const { data: revenueData } = await supabase
-            .from('revenue_records')
-            .select('teacher_share')
-            .eq('course_id', course.id)
-            .eq('teacher_id', profile.id)
-            .eq('status', 'approved');
-
-          const totalRevenue = revenueData?.reduce((sum, r) => sum + (r.teacher_share || 0), 0) || 0;
+          const qRevenue = query(collection(db, 'revenue_records'), where('course_id', '==', course.id), where('teacher_id', '==', profile.id), where('status', '==', 'approved'));
+          const snapRevenue = await getDocs(qRevenue);
+          const totalRevenue = snapRevenue.docs.reduce((sum, r) => sum + (r.data().teacher_share || 0), 0);
 
           return {
             ...course,
@@ -205,10 +177,9 @@ export function useTeacherStudents() {
       setIsLoading(true);
 
       // Get teacher's course IDs
-      const { data: courses } = await supabase
-        .from('courses')
-        .select('id, title, title_en')
-        .eq('teacher_id', profile.id);
+      const qCourses = query(collection(db, 'courses'), where('teacher_id', '==', profile.id));
+      const coursesSnap = await getDocs(qCourses);
+      const courses = coursesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       if (!courses || courses.length === 0) {
         setStudents([]);
@@ -218,11 +189,13 @@ export function useTeacherStudents() {
       const courseIds = courses.map(c => c.id);
 
       // Get student course assignments
-      const { data: studentAssignments } = await supabase
-        .from('student_courses')
-        .select('course_id, user_id')
-        .in('course_id', courseIds)
-        .eq('is_active', true);
+      let studentAssignments: any[] = [];
+      for (let i = 0; i < courseIds.length; i += 10) {
+        const chunk = courseIds.slice(i, i + 10);
+        const qAssignments = query(collection(db, 'student_courses'), where('course_id', 'in', chunk), where('is_active', '==', true));
+        const assignSnap = await getDocs(qAssignments);
+        studentAssignments = studentAssignments.concat(assignSnap.docs.map(d => d.data()));
+      }
 
       if (!studentAssignments || studentAssignments.length === 0) {
         setStudents([]);
@@ -233,12 +206,16 @@ export function useTeacherStudents() {
       const studentUserIds = [...new Set(studentAssignments.map(sa => sa.user_id))];
 
       // Fetch profiles for these students
-      const { data: studentProfiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('user_id', studentUserIds);
+      let studentProfiles: any[] = [];
+      for (let i = 0; i < studentUserIds.length; i += 10) {
+        const chunk = studentUserIds.slice(i, i + 10);
+        // Assuming profiles has user_id field
+        const qProfiles = query(collection(db, 'profiles'), where('user_id', 'in', chunk));
+        const profSnap = await getDocs(qProfiles);
+        studentProfiles = studentProfiles.concat(profSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }
 
-      if (!studentProfiles) {
+      if (!studentProfiles.length) {
         setStudents([]);
         return;
       }
@@ -254,23 +231,26 @@ export function useTeacherStudents() {
         if (!course) continue;
 
         // Get video count for course
-        const { count: totalVideos } = await supabase
-          .from('videos')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', sa.course_id);
+        const qVideos = query(collection(db, 'videos'), where('course_id', '==', sa.course_id));
+        const videosSnap = await getDocs(qVideos);
+        const totalVideos = videosSnap.size;
+        const videoIds = videosSnap.docs.map(d => d.id);
 
-        // Get completed videos for this student
-        const { data: progress } = await supabase
-          .from('video_progress')
-          .select('video_id, is_completed, last_watched_at')
-          .eq('user_id', student.user_id)
-          .in('video_id', (await supabase.from('videos').select('id').eq('course_id', sa.course_id)).data?.map(v => v.id) || []);
+        let completedVideos = 0;
+        let lastWatched = null;
 
-        const completedVideos = progress?.filter(p => p.is_completed).length || 0;
+        if (videoIds.length > 0) {
+           const qProg = query(collection(db, 'video_progress'), where('user_id', '==', student.user_id));
+           const progSnap = await getDocs(qProg);
+           const progress = progSnap.docs.map(d => d.data()).filter(p => videoIds.includes(p.video_id));
+           
+           completedVideos = progress.filter(p => p.is_completed).length;
+           lastWatched = progress.sort((a, b) => 
+             new Date(b.last_watched_at || 0).getTime() - new Date(a.last_watched_at || 0).getTime()
+           )[0]?.last_watched_at || null;
+        }
+
         const progressPercent = totalVideos ? Math.round((completedVideos / totalVideos) * 100) : 0;
-        const lastWatched = progress?.sort((a, b) => 
-          new Date(b.last_watched_at || 0).getTime() - new Date(a.last_watched_at || 0).getTime()
-        )[0]?.last_watched_at || null;
 
         studentProgressList.push({
           student,
@@ -311,19 +291,42 @@ export function useTeacherRevenue() {
     try {
       setIsLoading(true);
 
-      const { data, error: fetchError } = await supabase
-        .from('revenue_records')
-        .select(`
-          *,
-          course:courses(*),
-          student:profiles!revenue_records_student_id_fkey(*)
-        `)
-        .eq('teacher_id', profile.id)
-        .order('created_at', { ascending: false });
+      const qRev = query(collection(db, 'revenue_records'), where('teacher_id', '==', profile.id), orderBy('created_at', 'desc'));
+      const revSnap = await getDocs(qRev);
+      const revRecords = revSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
 
-      if (fetchError) throw fetchError;
+      // Fetch related courses and students
+      const courseIds = [...new Set(revRecords.map(r => r.course_id).filter(Boolean))];
+      const studentIds = [...new Set(revRecords.map(r => r.student_id).filter(Boolean))];
 
-      setRevenue(data as RevenueRecord[] || []);
+      const coursesMap = new Map();
+      if (courseIds.length) {
+         for(let i=0; i<courseIds.length; i+=10) {
+           const chunk = courseIds.slice(i, i+10);
+           // In Firestore querying by document ID usually uses documentId() but here id might be stored
+           // Assuming we just fetch all courses since we already mapped courses previously in other hooks
+           const qC = query(collection(db, 'courses'));
+           const snap = await getDocs(qC);
+           snap.docs.forEach(d => coursesMap.set(d.id, { id: d.id, ...d.data() }));
+         }
+      }
+
+      const studentsMap = new Map();
+      if (studentIds.length) {
+         for(let i=0; i<studentIds.length; i+=10) {
+           const chunk = studentIds.slice(i, i+10);
+           const qS = query(collection(db, 'profiles'), where('user_id', 'in', chunk));
+           const snap = await getDocs(qS);
+           snap.docs.forEach(d => studentsMap.set(d.data().user_id, { id: d.id, ...d.data() }));
+         }
+      }
+
+      revRecords.forEach(r => {
+         if (r.course_id) r.course = coursesMap.get(r.course_id);
+         if (r.student_id) r.student = studentsMap.get(r.student_id);
+      });
+
+      setRevenue(revRecords as RevenueRecord[]);
     } catch (err) {
       console.error('Error fetching revenue:', err);
       setError('Failed to fetch revenue');
@@ -351,15 +354,9 @@ export function useTeacherPaidWorks() {
     try {
       setIsLoading(true);
 
-      const { data, error: fetchError } = await supabase
-        .from('paid_works')
-        .select('*')
-        .eq('assigned_to', profile.id)
-        .order('created_at', { ascending: false });
-
-      if (fetchError) throw fetchError;
-
-      setWorks(data as PaidWork[] || []);
+      const qWorks = query(collection(db, 'paid_works'), where('assigned_to', '==', profile.id), orderBy('created_at', 'desc'));
+      const worksSnap = await getDocs(qWorks);
+      setWorks(worksSnap.docs.map(d => ({ id: d.id, ...d.data() })) as PaidWork[]);
     } catch (err) {
       console.error('Error fetching paid works:', err);
       setError('Failed to fetch paid works');
@@ -379,17 +376,12 @@ export function useTeacherPaidWorks() {
         updates.completed_at = new Date().toISOString();
       }
 
-      const { error } = await supabase
-        .from('paid_works')
-        .update(updates)
-        .eq('id', workId);
-
-      if (error) throw error;
+      await updateDoc(doc(db, 'paid_works', workId), updates);
       await fetchWorks();
       return { error: null };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating work status:', err);
-      return { error: err };
+      return { error: err.message };
     }
   };
 
@@ -408,19 +400,36 @@ export function useTeacherTickets() {
     try {
       setIsLoading(true);
 
-      const { data, error: fetchError } = await supabase
-        .from('support_tickets')
-        .select(`
-          *,
-          student:profiles!support_tickets_student_id_fkey(*),
-          course:courses(*)
-        `)
-        .eq('teacher_id', profile.id)
-        .order('created_at', { ascending: false });
+      const qTickets = query(collection(db, 'support_tickets'), where('teacher_id', '==', profile.id), orderBy('created_at', 'desc'));
+      const ticketsSnap = await getDocs(qTickets);
+      const tickets = ticketsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
 
-      if (fetchError) throw fetchError;
+      const studentIds = [...new Set(tickets.map(t => t.student_id).filter(Boolean))];
+      const courseIds = [...new Set(tickets.map(t => t.course_id).filter(Boolean))];
 
-      setTickets(data as SupportTicket[] || []);
+      const studentsMap = new Map();
+      if (studentIds.length) {
+         for(let i=0; i<studentIds.length; i+=10) {
+           const chunk = studentIds.slice(i, i+10);
+           const qS = query(collection(db, 'profiles'), where('user_id', 'in', chunk));
+           const snap = await getDocs(qS);
+           snap.docs.forEach(d => studentsMap.set(d.data().user_id, { id: d.id, ...d.data() }));
+         }
+      }
+
+      const coursesMap = new Map();
+      if (courseIds.length) {
+         const qC = query(collection(db, 'courses'));
+         const snap = await getDocs(qC);
+         snap.docs.forEach(d => coursesMap.set(d.id, { id: d.id, ...d.data() }));
+      }
+
+      tickets.forEach(t => {
+         if (t.student_id) t.student = studentsMap.get(t.student_id);
+         if (t.course_id) t.course = coursesMap.get(t.course_id);
+      });
+
+      setTickets(tickets as SupportTicket[]);
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError('Failed to fetch tickets');
@@ -435,37 +444,28 @@ export function useTeacherTickets() {
 
   const updateTicketStatus = async (ticketId: string, status: SupportTicket['status']) => {
     try {
-      const { error } = await supabase
-        .from('support_tickets')
-        .update({ status })
-        .eq('id', ticketId);
-
-      if (error) throw error;
+      await updateDoc(doc(db, 'support_tickets', ticketId), { status });
       await fetchTickets();
       return { error: null };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating ticket status:', err);
-      return { error: err };
+      return { error: err.message };
     }
   };
 
   const sendMessage = async (ticketId: string, message: string) => {
     if (!profile) return { error: 'No profile' };
-
     try {
-      const { error } = await supabase
-        .from('ticket_messages')
-        .insert({
-          ticket_id: ticketId,
-          sender_id: profile.id,
-          message,
-        });
-
-      if (error) throw error;
+      await addDoc(collection(db, 'ticket_messages'), {
+        ticket_id: ticketId,
+        sender_id: profile.id,
+        message,
+        created_at: new Date().toISOString()
+      });
       return { error: null };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending message:', err);
-      return { error: err };
+      return { error: err.message };
     }
   };
 
@@ -484,15 +484,9 @@ export function useWithdrawals() {
     try {
       setIsLoading(true);
 
-      const { data, error: fetchError } = await supabase
-        .from('withdrawal_requests')
-        .select('*')
-        .eq('teacher_id', profile.id)
-        .order('created_at', { ascending: false });
-
-      if (fetchError) throw fetchError;
-
-      setWithdrawals(data as WithdrawalRequest[] || []);
+      const qW = query(collection(db, 'withdrawal_requests'), where('teacher_id', '==', profile.id), orderBy('created_at', 'desc'));
+      const snap = await getDocs(qW);
+      setWithdrawals(snap.docs.map(d => ({ id: d.id, ...d.data() })) as WithdrawalRequest[]);
     } catch (err) {
       console.error('Error fetching withdrawals:', err);
       setError('Failed to fetch withdrawals');
@@ -513,21 +507,20 @@ export function useWithdrawals() {
     if (!profile) return { error: 'No profile' };
 
     try {
-      const { error } = await supabase
-        .from('withdrawal_requests')
-        .insert({
-          teacher_id: profile.id,
-          amount,
-          payment_method: paymentMethod,
-          payment_details: paymentDetails,
-        });
+      await addDoc(collection(db, 'withdrawal_requests'), {
+        teacher_id: profile.id,
+        amount,
+        payment_method: paymentMethod,
+        payment_details: paymentDetails,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      });
 
-      if (error) throw error;
       await fetchWithdrawals();
       return { error: null };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating withdrawal:', err);
-      return { error: err };
+      return { error: err.message };
     }
   };
 

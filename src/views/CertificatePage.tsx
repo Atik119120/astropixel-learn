@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
@@ -43,24 +44,28 @@ export default function CertificatePage() {
 
     // If user is logged in, try to fetch their own certificate with full details
     if (user) {
-      const { data, error } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('certificate_id', certificateId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!error && data) {
-        setCertificate(data as Certificate);
-        setIsVerified(true);
-        setIsLoading(false);
-        return;
+      try {
+        const certQuery = query(
+          collection(db, 'certificates'),
+          where('certificate_id', '==', certificateId),
+          where('user_id', '==', user.uid)
+        );
+        const snapshot = await getDocs(certQuery);
+        if (!snapshot.empty) {
+          setCertificate(snapshot.docs[0].data() as Certificate);
+          setIsVerified(true);
+          setIsLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching certificate:', error);
       }
     }
 
     // For public verification (or if user doesn't own this certificate),
     // use the secure Edge Function that only returns public data
     try {
+      const { supabase } = await import('@/integrations/supabase/client');
       const { data, error } = await supabase.functions.invoke('verify-certificate', {
         body: { certificate_id: certificateId }
       });

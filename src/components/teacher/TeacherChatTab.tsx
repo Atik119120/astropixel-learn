@@ -112,7 +112,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
   });
 
   const fetchRooms = async () => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
     
     try {
       const { data, error } = await supabase
@@ -164,7 +164,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
   };
 
   const fetchStudents = async () => {
-    if (!profile?.id || !user?.id) return;
+    if (!profile?.id || !user?.uid) return;
 
     try {
       // 1. Owner courses (courses.teacher_id = my profile id)
@@ -199,7 +199,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
       if (error) throw error;
 
       const studentUserIds = [...new Set((enrollments || []).map((row) => row.user_id))].filter(
-        (id) => id && id !== user.id,
+        (id) => id && id !== user.uid,
       );
 
       if (studentUserIds.length === 0) {
@@ -225,15 +225,15 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
   useEffect(() => {
     fetchRooms();
     fetchStudents();
-  }, [user?.id, profile?.id]);
+  }, [user?.uid, profile?.id]);
 
   const findDirectRoomWithStudent = async (studentUserId: string) => {
-    if (!user?.id) return null;
+    if (!user?.uid) return null;
 
     const { data: myMemberships, error: myMembershipsError } = await supabase
       .from('chat_room_members')
       .select('room_id')
-      .eq('user_id', user.id);
+      .eq('user_id', user.uid);
     if (myMembershipsError) throw myMembershipsError;
 
     const myRoomIds = (myMemberships || []).map((membership) => membership.room_id);
@@ -262,7 +262,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
   };
 
   const openDirectChat = async (student: StudentContact) => {
-    if (!user?.id || !profile?.id) {
+    if (!user?.uid || !profile?.id) {
       toast.error('Profile not loaded');
       return;
     }
@@ -285,7 +285,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
 
         const { error: selfError } = await supabase
           .from('chat_room_members')
-          .upsert({ room_id: room.id, user_id: user.id }, { onConflict: 'room_id,user_id' });
+          .upsert({ room_id: room.id, user_id: user.uid }, { onConflict: 'room_id,user_id' });
         if (selfError) throw selfError;
 
         const { error: studentError } = await supabase
@@ -373,7 +373,7 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
         .from('chat_room_members')
         .upsert({
           room_id: room.id,
-          user_id: user?.id,
+          user_id: user?.uid,
         }, { onConflict: 'room_id,user_id' });
       if (teacherMemberError) throw teacherMemberError;
       
@@ -422,14 +422,14 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
   };
 
   const sendMessage = async () => {
-    if (!user?.id || !selectedRoom || !newMessage.trim()) return;
+    if (!user?.uid || !selectedRoom || !newMessage.trim()) return;
     
     try {
       const { error } = await supabase
         .from('chat_messages')
         .insert({
           room_id: selectedRoom.id,
-          sender_id: user.id,
+          sender_id: user.uid,
           message: newMessage.trim(),
         });
       
@@ -674,10 +674,10 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
                       {messages.map((msg) => (
                         <div
                           key={msg.id}
-                          className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                          className={`flex ${msg.sender_id === user?.uid ? 'justify-end' : 'justify-start'}`}
                         >
                           <div className={`flex gap-2 max-w-[80%] ${
-                            msg.sender_id === user?.id ? 'flex-row-reverse' : ''
+                            msg.sender_id === user?.uid ? 'flex-row-reverse' : ''
                           }`}>
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={msg.sender?.avatar_url || undefined} />
@@ -686,18 +686,18 @@ export default function TeacherChatTab({ courses, language }: TeacherChatTabProp
                               </AvatarFallback>
                             </Avatar>
                             <div className={`rounded-lg p-3 ${
-                              msg.sender_id === user?.id
+                              msg.sender_id === user?.uid
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted'
                             }`}>
-                              {msg.sender_id !== user?.id && (
+                              {msg.sender_id !== user?.uid && (
                                 <p className="text-xs font-medium mb-1">
                                   {msg.sender?.full_name}
                                 </p>
                               )}
                               <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                               <p className={`text-xs mt-1 ${
-                                msg.sender_id === user?.id
+                                msg.sender_id === user?.uid
                                   ? 'text-primary-foreground/70'
                                   : 'text-muted-foreground'
                               }`}>

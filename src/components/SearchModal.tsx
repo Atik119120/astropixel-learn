@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ArrowRight, Layout, Users, Briefcase, Phone, BookOpen, Info, Sparkles, Loader2, GraduationCap, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
-
+import { db } from "@/integrations/firebase/config";
+import { collection, getDocs, query as fsQuery, where } from 'firebase/firestore';
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/env";
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -197,15 +198,17 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
   useEffect(() => {
     const loadDynamicData = async () => {
       try {
-        const { data: courses } = await supabase
-          .from('courses')
-          .select('id, title, description')
-          .eq('is_published', true);
+        const searchQ = fsQuery(
+          collection(db, 'courses'),
+          where('is_published', '==', true)
+        );
+        const snapshot = await getDocs(searchQ);
+        const courses = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
 
         const dynamicItems: SearchItem[] = [];
 
         // Add courses
-        if (courses) {
+        if (courses && courses.length > 0) {
           courses.forEach(course => {
             dynamicItems.push({
               title: course.title,
@@ -284,17 +287,23 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
     setIsAiLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-assistant', {
-        body: {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
           message: `User is searching for "${searchQuery}" on Astropixel website. Astropixel is a creative design agency offering: Graphic Design, Web Development, Video Editing, Digital Marketing, Logo Design, Branding, and also provides courses. Contact: +880 1779-277603.
           
 Based on their search, suggest which page they should visit in 1 short sentence. Available pages: Home, About Us, Services, Our Work/Portfolio, Team, Courses, Contact, Join Team, Student Login, Verify Certificate.
 
 Reply in ${language === 'bn' ? 'Bengali' : 'English'} only. Keep it very short (under 15 words).`
-        }
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('AI request failed');
+      const data = await response.json();
       setAiSuggestion(data?.response || null);
     } catch (error) {
       console.error('AI suggestion error:', error);

@@ -297,7 +297,7 @@ const AllCoursesCatalogPage = () => {
           isOpen={showEnrollmentModal}
           onClose={() => { setShowEnrollmentModal(false); setEnrollmentCourse(null); }}
           course={enrollmentCourse}
-          userId={user.id}
+          userId={user.uid}
           userEmail={profile.email}
           userName={profile.full_name}
           onSuccess={() => { setShowEnrollmentModal(false); setEnrollmentCourse(null); }}

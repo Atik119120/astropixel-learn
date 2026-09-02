@@ -28,7 +28,8 @@ import { useRef } from "react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/config';
 import { usePublicCourses } from "@/hooks/usePublicCourses";
 import { usePageContent } from "@/hooks/usePageContent";
 import CourseEnrollmentModal from "@/components/student/CourseEnrollmentModal";
@@ -289,40 +290,26 @@ const CoursesPage = () => {
     if (!user || !profile) return;
     try {
       // Check existing
-      const { data: existing } = await supabase
-        .from('enrollment_requests')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('course_id', course.id)
-        .eq('status', 'pending')
-        .maybeSingle();
-      if (existing) {
+      const existingSnap = await getDocs(query(collection(db, 'enrollment_requests'), where('user_id', '==', user.uid), where('course_id', '==', course.id), where('status', '==', 'pending')));
+      if (!existingSnap.empty) {
         toast.info(isBn ? 'ইতিমধ্যে রিকুয়েস্ট করা হয়েছে' : 'Already requested');
         return;
       }
 
-      const { error } = await supabase.from('enrollment_requests').insert({
-        user_id: user.id,
-        course_id: course.id,
-        student_name: profile.full_name,
-        student_email: profile.email,
-        payment_method: 'free',
-        transaction_id: 'FREE',
-        message: 'Free Course Enrollment',
-        status: 'pending',
-      });
-      if (error) throw error;
-
-      // Notify admin
       try {
-        await supabase.functions.invoke('student-enrollment-notify', {
-          body: {
-            studentName: profile.full_name, studentEmail: profile.email,
-            courseName: course.title, coursePrice: 0,
-            paymentMethod: 'free', transactionId: 'FREE',
-          }
+        await setDoc(doc(collection(db, 'enrollment_requests')), {
+          user_id: user.uid,
+          course_id: course.id,
+          student_name: profile.full_name,
+          student_email: profile.email,
+          payment_method: 'free',
+          transaction_id: 'FREE',
+          message: 'Free Course Enrollment',
+          status: 'pending',
         });
-      } catch {}
+      } catch (error) { throw error; }
+
+      // Notify admin (removed)
 
       toast.success(isBn ? 'ফ্রি কোর্সে এনরোলমেন্ট রিকুয়েস্ট পাঠানো হয়েছে!' : 'Free course enrollment request sent!');
     } catch (err) {
@@ -1026,7 +1013,7 @@ const CoursesPage = () => {
           isOpen={showEnrollmentModal}
           onClose={() => { setShowEnrollmentModal(false); setEnrollmentCourse(null); }}
           course={enrollmentCourse}
-          userId={user.id}
+          userId={user.uid}
           userEmail={profile.email}
           userName={profile.full_name}
           onSuccess={() => { setShowEnrollmentModal(false); setEnrollmentCourse(null); }}
